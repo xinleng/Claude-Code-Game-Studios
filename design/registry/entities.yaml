@@ -37,7 +37,7 @@
 #   Each entry: name, status, source, referenced_by[], attributes{}, added, revised
 
 version: 1
-last_updated: ""
+last_updated: "2026-05-19"  # upgrade-definition designed: added pity_threshold (value 3, changed from game-concept.md default of 2); updated referenced_by for reset_damage_threshold, regen_rate_max
 
 # ─── ENTITIES ────────────────────────────────────────────────────────────────
 # Named game-world objects: enemies, NPCs, characters, factions, bosses.
@@ -48,7 +48,149 @@ last_updated: ""
 # Attribute fields: any key stats that could appear in another GDD
 #   (health, damage, drops, faction, etc.)
 
-entities: []
+entities:
+  - name: guan_yu
+    status: active
+    source: design/gdd/general-characters.md
+    referenced_by:
+      - design/gdd/general-characters.md
+    weapon: Green Dragon Crescent Blade (guandao)
+    base_attack: 10
+    base_radius: 1.5
+    finisher_shape: Ring
+    finisher_direction: Omnidirectional
+    finisher_radius: 3.0
+    finisher_damage: 25
+    added: 2026-05-11
+    revised: ""
+
+  - name: zhao_yun
+    status: active
+    source: design/gdd/general-characters.md
+    referenced_by:
+      - design/gdd/general-characters.md
+    weapon: Serpent Spear (chang qiang)
+    base_attack: 10
+    base_radius: 1.5
+    finisher_shape: Cone
+    finisher_direction: ForwardFacing
+    cone_half_angle_deg: 45
+    finisher_radius: 3.0
+    finisher_damage: 25
+    input_direction_window_ms: 300
+    added: 2026-05-11
+    revised: ""
+
+  - name: lu_bu
+    status: active
+    source: design/gdd/general-characters.md
+    referenced_by:
+      - design/gdd/general-characters.md
+      - design/gdd/enemy-definition.md
+    weapon: Sky Piercer Halberd (fang tian ji)
+    base_attack: 10
+    base_radius: 1.5
+    finisher_shape: PointBurst
+    finisher_direction: Omnidirectional  # was: PlayerPosition — corrected 2026-05-15
+    finisher_radius: 3.0
+    finisher_damage: 25
+    knockback_force: 5.0  # u/s; gated on combo_counter=2 for Iron Captain/Warlord
+    knockback_radius: 3.0  # u; matches finisher_radius; basic infantry: no gate
+    added: 2026-05-11
+    revised: "2026-05-15"
+
+  - name: levy_soldier
+    status: active
+    source: design/gdd/enemy-definition.md
+    referenced_by:
+      - design/gdd/enemy-definition.md
+    hp: 30
+    move_speed: 1.5
+    attack_damage: 5
+    attack_range: 0.8
+    xp_weight: 1
+    stagger: any_finisher
+    telegraph_duration_ms: 400
+    telegraph_shape: horizontal_ring
+    added: 2026-05-11
+    revised: ""
+
+  - name: halberd_pikeman
+    status: active
+    source: design/gdd/enemy-definition.md
+    referenced_by:
+      - design/gdd/enemy-definition.md
+    hp: 40
+    move_speed: 2.0
+    attack_damage: 8
+    attack_range: 1.8
+    xp_weight: 2
+    stagger: any_finisher
+    telegraph_duration_ms: 350
+    telegraph_shape: directional_line
+    added: 2026-05-11
+    revised: ""
+
+  - name: fire_arrow_archer
+    status: active
+    source: design/gdd/enemy-definition.md
+    referenced_by:
+      - design/gdd/enemy-definition.md
+    hp: 25
+    move_speed: 0.8
+    attack_damage: 10
+    attack_range: 6.0
+    xp_weight: 2
+    stagger: any_finisher
+    telegraph_duration_ms: 600
+    telegraph_shape: arrowhead_above
+    projectile_speed: 8.0
+    added: 2026-05-11
+    revised: ""
+
+  - name: iron_captain
+    status: active
+    source: design/gdd/enemy-definition.md
+    referenced_by:
+      - design/gdd/enemy-definition.md
+    hp: 300  # 5-min; 10-min = 375; 15-min = 450
+    move_speed: 1.6
+    attack_damage_standard: 12
+    attack_damage_counter_hit: 25
+    attack_range: 1.0
+    counter_hit_range: 1.5
+    xp_weight: 15
+    stagger: full_combo_finisher_only
+    stagger_resist_multiplier: 0.5
+    stagger_duration_ms: 800
+    telegraph_duration_ms_standard: 500
+    telegraph_duration_ms_counter_5min: 600
+    telegraph_duration_ms_counter_10min: 550
+    telegraph_duration_ms_counter_15min: 450  # was: 500 (2026-05-13), then 400 (2026-05-17 rev1), then 300 (2026-05-17 rev2), then 450 (2026-05-18 — smooth escalation 600→550→450ms; 300ms broke Pillar 1 legibility)
+    telegraph_shape_standard: thick_ring
+    telegraph_shape_counter: arc_270
+    added: 2026-05-11
+    revised: "2026-05-18"
+
+  - name: warlord
+    status: active
+    source: design/gdd/enemy-definition.md
+    referenced_by:
+      - design/gdd/enemy-definition.md
+    hp: 800
+    phase_2_trigger_hp: 400
+    phase_2_threshold_ratio: 0.5
+    move_speed_p1: 1.2
+    move_speed_p2: 2.0
+    attack_damage_standard: 20
+    attack_damage_counter_hit: 30
+    attack_damage_slam: 40
+    xp_weight: 50
+    stagger: full_combo_finisher_only
+    stagger_resist_multiplier: 0.5
+    stagger_duration_ms: 1000
+    added: 2026-05-11
+    revised: ""
 
 # Example (remove when first real entry is added):
 #
@@ -106,7 +248,63 @@ items: []
 #   output_range[min, max], added
 # Optional: expression (the actual formula), notes
 
-formulas: []
+formulas:
+  - name: effective_damage
+    status: active
+    source: design/gdd/damage-health.md
+    referenced_by:
+      - design/gdd/damage-health.md
+    variables:
+      - raw_damage
+      - damage_reduction
+    expression: "max(1, floor(raw_damage × (1 - damage_reduction)))"
+    output_range: [1, 40]
+    notes: "Player incoming damage formula. raw_damage comes from AttackEvent.AttackDamage forwarded by Parry System. damage_reduction is upgrade-gated (0.0 at run start, capped at 0.75). Minimum 1 enforced post-floor."
+    added: 2026-05-16
+    revised: ""
+
+  - name: xp_drop
+    status: active
+    source: design/gdd/enemy-definition.md
+    referenced_by:
+      - design/gdd/enemy-definition.md
+    variables:
+      - xp_weight
+      - xp_scalar
+    expression: "xp_weight[enemy_type] × xp_scalar"
+    output_range: [0, unbounded]
+    notes: "xp_scalar is owned by Progression System GDD. xp_weight per enemy type is defined in enemy-definition.md."
+    added: 2026-05-11
+    revised: ""
+
+  - name: elite_stagger_resistance
+    status: active
+    source: design/gdd/enemy-definition.md
+    referenced_by:
+      - design/gdd/enemy-definition.md
+    variables:
+      - finisher_damage
+      - combo_counter
+      - stagger_resist_multiplier
+    expression: "finisher_damage × stagger_resist_multiplier if combo_counter < 2, else finisher_damage"
+    output_range: [finisher_damage × stagger_resist_multiplier, finisher_damage]
+    notes: "Applies only to Iron Captain and Warlord. Basic infantry are staggered by any Finisher."
+    added: 2026-05-11
+    revised: ""
+
+  - name: phase_2_trigger_hp
+    status: active
+    source: design/gdd/enemy-definition.md
+    referenced_by:
+      - design/gdd/enemy-definition.md
+    variables:
+      - warlord_max_hp
+      - phase_2_threshold_ratio
+    expression: "warlord_max_hp × phase_2_threshold_ratio"
+    output_range: [0, warlord_max_hp]
+    notes: "Default: 800 × 0.5 = 400 HP. Roar fires before death check if threshold crossed in one hit."
+    added: 2026-05-11
+    revised: ""
 
 # Example:
 #
@@ -139,7 +337,141 @@ formulas: []
 #
 # Required fields: name, status, source, referenced_by, value, unit, added
 
-constants: []
+constants:
+  - name: base_attack
+    status: active
+    source: design/gdd/general-characters.md
+    referenced_by:
+      - design/gdd/general-characters.md
+    value: 10
+    unit: damage
+    notes: "Shared default for all generals. Source of truth here; consumed by Combat Core (auto-attack) and Combo System (Finisher damage formula)."
+    added: 2026-05-11
+    revised: ""
+
+  - name: base_radius
+    status: active
+    source: design/gdd/general-characters.md
+    referenced_by:
+      - design/gdd/general-characters.md
+    value: 1.5
+    unit: units
+    notes: "Shared default melee radius for all generals. Source of truth here; consumed by Combo System (Finisher AoE formula)."
+    added: 2026-05-11
+    revised: ""
+
+  - name: zhao_yun_cone_half_angle_deg
+    status: active
+    source: design/gdd/general-characters.md
+    referenced_by:
+      - design/gdd/general-characters.md
+    value: 45
+    unit: degrees
+    notes: "Half-angle of Zhao Yun's Finisher cone. Total arc = 90 degrees. Safe range 20-70 degrees."
+    added: 2026-05-11
+    revised: ""
+
+  - name: zhao_yun_input_direction_window_ms
+    status: active
+    source: design/gdd/general-characters.md
+    referenced_by:
+      - design/gdd/general-characters.md
+    value: 300
+    unit: milliseconds
+    notes: "How recent a directional input must be to count for Zhao Yun's cone orientation. If no input within this window, falls back to nearest-enemy direction."
+    added: 2026-05-11
+    revised: ""
+
+  - name: base_max_hp
+    status: active
+    source: design/gdd/damage-health.md
+    referenced_by:
+      - design/gdd/damage-health.md
+    value: 100
+    unit: HP
+    notes: "Player starting max HP per run. Survivability upgrades add flat bonus via max_hp_bonus. Source of truth here; Run Session Manager reads at retry; Upgrade Definition GDD reads when applying HP upgrades."
+    added: 2026-05-16
+    revised: ""
+
+  - name: invulnerability_duration_ms
+    status: active
+    source: design/gdd/damage-health.md
+    referenced_by:
+      - design/gdd/damage-health.md
+    value: 500
+    unit: milliseconds
+    notes: "Post-damage iframe window. During this window incoming damage is discarded; parry input still processed. Timer does not reset on discarded hits. Implementation uses Time.unscaledTime (pause-immune). Regen uses Time.deltaTime (pause-respecting) — asymmetry documented as intentional in damage-health.md Formula 2."
+    added: 2026-05-16
+    revised: "2026-05-18"
+
+  - name: reset_damage_threshold
+    status: active
+    source: design/gdd/damage-health.md
+    referenced_by:
+      - design/gdd/damage-health.md
+      - design/gdd/upgrade-definition.md
+    value: 3
+    unit: HP
+    notes: "Minimum effective_damage required to trigger combo_counter and momentum_meter resets on DamageTaken. Hits below threshold deal HP damage but do not reset combat state. Prevents trivial grazes (1-damage at max defense) from carrying same cost as real hits."
+    added: 2026-05-18
+    revised: ""
+
+  - name: regen_rate_max
+    status: active
+    source: design/gdd/damage-health.md
+    referenced_by:
+      - design/gdd/damage-health.md
+      - design/gdd/upgrade-definition.md
+    value: 1.5
+    unit: HP/s
+    notes: "Hard ceiling for combined regen_rate from all upgrade sources. Below immortality threshold (2.0 HP/s at default iframes). Upgrade Definition GDD enforces this ceiling at S4 apply time."
+    added: 2026-05-18
+    revised: "2026-05-19"
+
+  - name: pity_threshold
+    status: active
+    source: design/gdd/upgrade-definition.md
+    referenced_by:
+      - design/gdd/game-concept.md
+      - design/gdd/upgrade-definition.md
+    value: 3
+    unit: draws
+    notes: "Maximum consecutive draws without the player's most-picked upgrade category before the next draw is guaranteed to include that category. Changed from 2 (game-concept.md default) to 3 in upgrade-definition.md to preserve player agency (2 was a rail, 3 is a safety net). Progression System GDD must implement this rule."
+    added: 2026-05-19
+    revised: ""
+
+  - name: damage_reduction_cap
+    status: active
+    source: design/gdd/damage-health.md
+    referenced_by:
+      - design/gdd/damage-health.md
+    value: 0.75
+    unit: multiplier
+    notes: "Maximum damage_reduction Survivability upgrades can provide. Enforced at upgrade-apply time in Damage & Health. Above cap: clamped and designer error logged."
+    added: 2026-05-16
+    revised: ""
+
+  - name: stagger_resist_multiplier
+    status: active
+    source: design/gdd/enemy-definition.md
+    referenced_by:
+      - design/gdd/enemy-definition.md
+    value: 0.5
+    unit: multiplier
+    notes: "Damage fraction applied to elite enemies when Finisher lands without full combo. Cross-system: Combo System reads this at Finisher resolution."
+    added: 2026-05-11
+    revised: ""
+
+  - name: phase_2_threshold_ratio
+    status: active
+    source: design/gdd/enemy-definition.md
+    referenced_by:
+      - design/gdd/enemy-definition.md
+    value: 0.5
+    unit: ratio
+    notes: "HP fraction at which Warlord Phase 2 transition fires. Default: 50% max HP."
+    added: 2026-05-11
+    revised: ""
 
 # Example:
 #

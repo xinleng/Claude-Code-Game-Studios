@@ -1,6 +1,6 @@
 # Unity 6.3 LTS — Breaking Changes
 
-**Last verified:** 2026-02-13
+**Last verified:** 2026-04-24
 
 This document tracks breaking API changes and behavioral differences between Unity 2022 LTS
 (likely in model training) and Unity 6.3 LTS (current version). Organized by risk level.
@@ -117,6 +117,39 @@ UGUI still works but UI Toolkit is recommended for new projects.
 ### Old Animation System
 **Status:** Deprecated
 **Replacement:** Animator Controller (Mecanim)
+
+---
+
+## Unity 6.2-Specific Changes
+
+### URP — SetupRenderPasses Deprecated
+**Versions:** Unity 6.2+
+
+```csharp
+// ❌ DEPRECATED (6.2+)
+public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData data) { }
+
+// ✅ NEW — use render graph system
+public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData data) { }
+```
+
+---
+
+### UI Toolkit — VisualElement.transform Deprecated
+**Versions:** Unity 6.2+
+
+`VisualElement.transform` is deprecated. Use `VisualElement.style` transform properties instead.
+
+---
+
+## Unity 6.3-Specific Changes
+
+### URP Compatibility Mode — Hidden by Default
+**Versions:** Unity 6.3 LTS
+
+URP Compatibility Mode is now hidden by default and deprecated. Projects using Compatibility Mode for custom render passes must migrate to the Render Graph API (`RecordRenderGraph`). See URP/HDRP Renderer Feature API Changes above.
+
+**Impact for Dynasty Survivors:** Any custom VFX post-processing passes (parry burst screen flash, combo finisher effects) must use the Render Graph API from day one. Do not implement them using the Compatibility Mode path.
 
 ---
 
