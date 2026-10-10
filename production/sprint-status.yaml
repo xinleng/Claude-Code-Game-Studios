@@ -13,10 +13,10 @@ stories:
     name: "Day-0 Unity 6.3 LTS project setup & assembly layout"
     file: "production/epics/bootstrap-combat-frame/story-001-unity-project-setup.md"
     priority: must-have
-    status: ready-for-dev
+    status: in-progress
     owner: "user + unity-specialist"
     estimate_days: 1.0
-    blocker: "User adding CI secrets (Pro: UNITY_SERIAL/EMAIL/PASSWORD; set a Unity password first - Google sign-in); project location = repo root; example test parked in tests/_pending/"
+    blocker: "AC-10 only: push branch + PR to main so CI runs (push needs user approval)"
     completed: ""
   - id: "BCF-002"
     name: "IGameClock with unified pause-compensated RunTime + test clock"

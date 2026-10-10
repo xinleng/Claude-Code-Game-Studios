@@ -1,7 +1,7 @@
 # Story 001: Day-0 Unity 6.3 LTS Project Setup & Assembly Layout
 
 > **Epic**: Bootstrap, CombatFrame & Run Clock
-> **Status**: Ready
+> **Status**: In Progress — AC-1…AC-9 verified locally 2026-10-10; AC-10 (CI green) pending push
 > **Layer**: Foundation
 > **Type**: Config/Data
 > **Manifest Version**: 2026-10-10
@@ -144,3 +144,20 @@
 
 - Depends on: None (first story of the first epic). External: user adds `UNITY_LICENSE` secret before AC-10 can pass.
 - Unlocks: Story 002, Story 003, Story 004 (and transitively every story in every epic — nothing else can be compiled or tested until this lands); input-manager, object-pool, game-data, run-session-manager epics
+
+---
+
+## Completion Notes (2026-10-10, in progress)
+
+- Editor **6000.3.6f1** (revision bbb010bdb8a3); created with the Unity CLI (`unity projects create`, template `com.unity.template.urp-blank`), configured via a one-off batchmode setup script (deleted), moved to the repo root. Commits `75d508b`, `db4116e`.
+- AC-1 ✅ opens/compiles with zero errors (two expected warnings: `Dynasty.Input` / `Dynasty.Bootstrap` have no scripts yet). ProjectVersion.txt at `ProjectSettings/`.
+- AC-2 ✅ PC + Mobile URP renderers `m_RenderingMode: 2` (Forward+).
+- AC-3 ✅ `com.unity.inputsystem` **1.18.0** (exact) — note: engine-reference docs cite the 1.11 manual; flag for `/setup-engine` refresh. URP / VFX Graph 17.3.0, Test Framework 1.6.0, ugui 2.0.0 (needed by InputSystemUIInputModule). Removed ai.navigation, visualscripting, timeline, multiplayer.center, collab-proxy. No Addressables.
+- AC-4 ✅ `activeInputHandler: 1` (Input System Package only).
+- AC-5 ✅ `Assets/Settings/InputSystem.inputsettings.asset`, updateMode = ProcessEventsInDynamicUpdate, registered as `com.unity.input.settings`.
+- AC-6 ✅ project-wide actions unassigned; template `InputSystem_Actions` asset deleted.
+- AC-7 ✅ `Assets/Scenes/MainArena.unity` is the only build scene.
+- AC-8 ✅ only `Dynasty.Input.asmdef` references `Unity.InputSystem`; no `Assembly-CSharp.dll` produced.
+- AC-9 ✅ `unity test` CLI: EditMode 1/1, PlayMode 1/1 passed (`project_setup_assembly_test.cs`, `project_setup_play_mode_test.cs`).
+- AC-10 ⏳ needs the branch pushed + a PR to `main` (workflow triggers on push/PR to main only). game-ci image `unityci/editor:ubuntu-6000.3.6f1-base-3` exists.
+- Layout: `src/` = local package `com.dynasty.game`, `tests/` = `com.dynasty.tests` (in `testables`); `tests/unit|integration|helpers` join EditModeTests via `.asmref`; `tests/_pending/` excluded by a never-defined define constraint.
