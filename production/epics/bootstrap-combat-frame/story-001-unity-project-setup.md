@@ -5,6 +5,7 @@
 > **Layer**: Foundation
 > **Type**: Config/Data
 > **Manifest Version**: 2026-10-10
+> **User decisions 2026-10-10**: (1) Unity project at the **repo root** (option A — `src/` + `tests/` as local packages / `.asmref` links); (2) example test **moved aside** to `tests/_pending/damage-health/` (done; not compiled); (3) CI licence: user has a **Unity Pro** licence → secrets `UNITY_SERIAL` (from the Unity Subscriptions page), `UNITY_EMAIL`, `UNITY_PASSWORD` (account uses Google sign-in — a Unity password must be set first; disable authenticator 2FA if CI login fails). Workflow updated to read these three; **no** `UNITY_LICENSE` (Personal-only, per game-ci).
 
 ## Context
 

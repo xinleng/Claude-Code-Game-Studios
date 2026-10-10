@@ -52,11 +52,14 @@ jobs:
           key: unity-library-${{ hashFiles(format('{0}/Packages/packages-lock.json', needs.detect.outputs.project-path)) }}
           restore-keys: unity-library-
 
-      # Requires the UNITY_LICENSE repository secret (game-ci activation docs).
+      # Unity PRO licence: requires repository secrets UNITY_SERIAL (from the Unity Subscriptions page), UNITY_EMAIL and
+      # UNITY_PASSWORD. Do NOT add UNITY_LICENSE (Personal-only). The test runner returns the seat after each job.
       - name: Run Edit Mode Tests
         uses: game-ci/unity-test-runner@v4
         env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
           projectPath: ${{ needs.detect.outputs.project-path }}
           testMode: editmode
@@ -65,7 +68,9 @@ jobs:
       - name: Run Play Mode Tests
         uses: game-ci/unity-test-runner@v4
         env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
           projectPath: ${{ needs.detect.outputs.project-path }}
           testMode: playmode

@@ -1,0 +1,8 @@
+{
+    "name": "Dynasty.PendingTests",
+    "references": [],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "DYNASTY_PENDING_TESTS_NEVER_DEFINED"
+    ]
+}

@@ -258,7 +258,7 @@
    ───────────────────────────────────────────────────────────────────────── */
 const DATA = {
   meta:{
-    phase:"Pre-Production · gate CONCERNS → advanced 10-10",
+    phase:"Pre-Production · M1 · Sprint 1 planned",
     consistency:"Architecture independently reviewed 10-10 (3 blockers fixed)",
     updated:"2026-10-10",
     source:"design/, docs/architecture/ (11 ADRs + manifest v2026-10-10), production/epics/, production/gate-checks/"
@@ -268,8 +268,8 @@ const DATA = {
     {big:"17 / 17", lbl:"System GDDs authored", pct:100, color:"var(--jade)", note:"All MVP systems designed; 2 clock-wording fixes 10-10"},
     {big:"11 / 12", lbl:"ADRs accepted", pct:92, color:"var(--jade)", note:"0001–0010 amended 10-10 + 0012 new; 0011 audio staged"},
     {big:"69 / 72", lbl:"Requirements traced", pct:96, color:"var(--jade)", note:"0 Foundation/Core gaps; 3 partial (staged audio + 2 payload details)"},
-    {big:"39", lbl:"Foundation stories", pct:null, color:"var(--blue)", note:"5 epics · 37 Ready · 2 Blocked (flag #4; Combo/Parry signals)"},
-    {big:"7", lbl:"Decisions waiting on you", pct:null, color:"var(--red)", note:"min-spec · timeline/M1 · flag #4 · RATIFY list · commit · Unity project/licence · play prototype"},
+    {big:"39", lbl:"Foundation stories", pct:null, color:"var(--blue)", note:"5 epics · 38 Ready · 1 Blocked · 14 in Sprint 1 must-have"},
+    {big:"3", lbl:"Decisions waiting on you", pct:null, color:"var(--red)", note:"Unity project location + licence secret + example-test move · art RATIFY list (post-prototype) · play the prototype"},
     {big:"4", lbl:"Open balance concerns", pct:null, color:"var(--amber)", note:"→ prototype; CD: start with Finisher ≥ Levy HP"}
   ],
 
@@ -287,7 +287,7 @@ const DATA = {
     {nm:"First UX Spec", status:"done", dt:"combat-hud.md — PROVISIONAL, needs /ux-review", doc:"design/ux/combat-hud.md"},
     {nm:"Phase Gate", status:"done", dt:"CONCERNS → advanced to Pre-Production (4 directors: non-blocking)", doc:"production/gate-checks/gate-check-2026-10-10-pre-production.md"},
     {nm:"Foundation Epics + Stories", status:"done", dt:"5 epics · 39 stories (37 Ready, 2 Blocked)", doc:"production/epics/index.md"},
-    {nm:"Sprint Planning", status:"active", dt:"Waiting on YOU: timeline/M1 cut line + min-spec"},
+    {nm:"Sprint Planning", status:"done", dt:"Sprint 1 (10-12 → 10-23): 13 must-have items, 7.75 of 8 days + QA plan (~178 tests)", doc:"production/sprints/sprint-1.md"},
     {nm:"Prototype", status:"todo", dt:"combo + parry — needs YOU at the keyboard (Sprint 1 critical path)"},
     {nm:"Implementation", status:"todo", dt:"Starts with bootstrap-combat-frame 001 (Unity project)"},
     {nm:"QA", status:"todo", dt:"Test plan, smoke, sign-off"},
@@ -352,6 +352,7 @@ const DATA = {
   ],
 
   log:[
+    {ld:"2026-10-10", lt:"Decisions: min-spec GTX 1650/R5 3600/16GB; M1 Core Loop Playable (10-12 → 11-20); flag #4 → delta multipliers. Committed 7018499. Sprint 1 planned + QA plan (~178 automated tests)."},
     {ld:"2026-10-10", lt:"/create-epics layer: foundation (5 epics) + /create-stories ×5: 39 stories (37 Ready, 2 Blocked), all with QA test cases."},
     {ld:"2026-10-10", lt:"/gate-check pre-production: CONCERNS (all 4 directors non-blocking) → stage advanced to Pre-Production. TD must-fixes applied: control manifest v2026-10-10, architecture.md v1.1, technical-preferences, engine-reference corrections."},
     {ld:"2026-10-10", lt:"ADR-0012 scene/boot flow authored → 0 Foundation traceability gaps. /ux-design combat-hud (provisional)."},

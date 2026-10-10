@@ -3,9 +3,9 @@
 *Last updated: 2026-10-10*
 
 <!-- STATUS -->
-Epic: Pre-Production — Milestone M1 "Core Loop Playable" (2026-10-12 → 2026-11-20)
-Feature: Decisions recorded 2026-10-10 (min-spec, M1 cut line, flag #4 delta model) — ready for sprint planning
-Task: RESUME → /sprint-plan new (Sprint 1 = Unity project setup → pool → clock → input → greybox combo/parry prototype)
+Epic: Pre-Production — M1 "Core Loop Playable" · Sprint 1 (2026-10-12 → 2026-10-23)
+Feature: Sprint 1 planned (production/sprints/sprint-1.md) + QA plan (production/qa/qa-plan-sprint-1.md)
+Task: RESUME → user: Unity project location + UNITY_LICENSE secret + OK to move example test → /story-readiness BCF-001 → /dev-story BCF-001; then PROTO-1 /prototype combo-and-parry-system
 <!-- /STATUS -->
 
 ## Decisions recorded 2026-10-10 (user, after the overnight batch)
@@ -13,6 +13,8 @@ Task: RESUME → /sprint-plan new (Sprint 1 = Unity project setup → pool → c
 - **Min-spec**: GTX 1650 / Ryzen 5 3600 / 16GB @1080p — pinned in technical-preferences.md; art bible header updated
 - **Timeline**: M1 "Core Loop Playable" cut line — production/milestones/m1-core-loop-playable.md (Guan Yu only, 3 infantry types, ~12 upgrades, 600s run, combat HUD only, greybox; elites/Warlord/Dodge/generals 2–3/full catalogue → M2)
 - **GDD flag #4**: delta-multiplier model — C1 = damage_delta +0.6 (→40 at base 25), C2 = radius_delta +0.5 (→4.5u); combo-system finisher_damage_delta_cap 0.5→0.6; upgrade-definition + combo-system updated; game-data story 008 unblocked (38/39 stories Ready)
+- **Engine version**: stay on **Unity 6.3 LTS** (user considered 6.6 = non-LTS Update release; declined). Plan: one LTS→LTS upgrade to 6.7 LTS when it ships, ideally between M1 and M2. Install the latest 6.3 patch via Hub before BCF-001 (6000.3.6f1 currently installed)
+- **CI**: user added Pro-licence secrets (UNITY_SERIAL/EMAIL/PASSWORD); workflow updated. Untested — needs the Unity project (BCF-001) + a push/PR to main; gh CLI is signed in as XinLeng-Como (403 on xinleng repo)
 - Still open: Unity project location + UNITY_LICENSE secret + moving the example test out of the build; art bible RATIFY list (after prototype); play the prototype
 
 ## ⏸ Session Wrap 2026-10-10 (autonomous overnight batch) — Resume Instructions
