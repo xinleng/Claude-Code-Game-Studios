@@ -1,8 +1,8 @@
 # Game Concept: Dynasty Survivors
 
 *Created: 2026-04-24*
-*Updated: 2026-04-24 — renamed; added Three Kingdoms theme; added combo finisher system; added army scale + map objectives as stretch goals*
-*Status: Draft*
+*Updated: 2026-06-18 — synced to approved system GDDs: 24 upgrades / 3 lanes + Modifier type / drought weighting (pity rule removed) / scope tiers / damage-reset threshold. See gdd-cross-review-2026-06-18.md.*
+*Status: Approved (2026-05-10; synced to children 2026-06-18)*
 
 ---
 
@@ -66,7 +66,7 @@ Like Vampire Survivors, AND ALSO you play as a Three Kingdoms general with two i
 2. **Combo finisher system** — landing 2 consecutive melee hits builds a combo counter (visible UI); the 3rd hit triggers a Finisher: a stronger attack with larger area, bonus damage, and a distinct visual/audio flourish. Counter resets if the player takes damage or leaves attack range too long. A dedicated upgrade category (Combo) enhances finisher power, area, or adds status effects.
 3. **Parry system** — one-button input; generous timing window; successful parry triggers an area burst (damage + brief invincibility) and fills the momentum meter; missing the window has no penalty (only opportunity cost)
 4. **Momentum meter** — builds on successful parries; higher meter = larger burst; resets on taking damage (not on a missed parry attempt)
-5. **XP / level-up / upgrade picks** — enemies drop XP on death; level up presents 3 readable upgrade options drawn from 4 categories: **Combo** (finisher power/area/effects), **Parry** (burst size/momentum gain), **Auto-attack** (base damage/speed/range), **Survivability** (HP/regen/damage reduction); each upgrade is one line, no tooltip required
+5. **XP / level-up / upgrade picks** — enemies drop XP on death; level up presents 3 readable upgrade options drawn from a 24-upgrade flat pool across 3 skill lanes plus 1 Modifier type: **Combo** (finisher power/area/effects), **Parry** (burst size/momentum gain), **Auto-attack** (base damage/speed/range), and **Modifiers** (cross-lane HP/regen/damage reduction — capped at 3 picks per run, supplement rather than define a build); each upgrade is one line, no tooltip required
 6. **Enemy wave escalation** — spawns escalate in density and speed every 2 minutes; elite enemies with exaggerated telegraphs appear at 5/10/15 min as combined combo + parry skill tests
 
 ---
@@ -103,7 +103,7 @@ Like Vampire Survivors, AND ALSO you play as a Three Kingdoms general with two i
 Character auto-attacks nearby enemies continuously. After 2 consecutive hits land, the combo counter primes — staying in range triggers a Finisher on the 3rd hit (bigger, louder, more satisfying). Enemies telegraph attacks with a flash on their body and a soft ring indicator around the player. Pressing parry at the right moment triggers an area burst and fills the momentum meter. Taking damage resets both the momentum meter and the combo counter. Constant decisions: push in to complete the combo, or reposition to safety?
 
 ### Short-Term (5-15 minutes)
-Enemies drop XP → level up → pick 1 of 3 upgrades from a pool of 4 categories (Combo / Parry / Auto-attack / Survivability). Run identity forms around which categories you lean into. The first elite at minute 5 is the first real "do both" moment — requires a full combo to stagger and a parry to survive its counter-hit. Micro-goals emerge naturally: "I need to land one more finisher to fill my momentum meter."
+Enemies drop XP → level up → pick 1 of 3 upgrades from a 24-upgrade flat pool across 3 skill lanes (Combo / Parry / Auto-attack) plus Modifiers (capped at 3 picks/run). Run identity forms around which lane you lean into. The first elite at minute 5 is the first real "do both" moment — requires a full combo to stagger and a parry to survive its counter-hit. Micro-goals emerge naturally: "I need to land one more finisher to fill my momentum meter."
 
 ### Session-Level (20-30 minutes)
 A complete run is 20 minutes. Survive to the end → win screen with stats. Die → death screen with stats and "try again" prompt. The fixed timer provides a natural stopping point. The hook back: "I almost had it — if I'd taken the Combo upgrade at level 4 instead of HP…"
@@ -209,8 +209,8 @@ Color philosophy: Warm base palette (ink-wash battlefield tones) with a single a
 | **Art Pipeline Complexity** | Low-Medium — developer has 3D/realtime art background; Unity URP for stylized rendering; Finisher VFX and parry burst are the two non-negotiable quality targets for MVP |
 | **Audio Needs** | Moderate — 3-hit audio escalation (hit → hit → CRASH) is core to combo feel; parry SFX must feel crisp; music builds with wave intensity |
 | **Networking** | None |
-| **Content Volume** | MVP: 1 map, 5 enemy types, 3 general characters (weapon types), 15-18 upgrades across 4 categories |
-| **Procedural Systems** | Enemy wave spawning (escalating); upgrade pool draw (weighted random per category) |
+| **Content Volume** | MVP: 1 map, 5 enemy types, 3 general characters (weapon types), 24 upgrades across 3 skill lanes + Modifier type |
+| **Procedural Systems** | Enemy wave spawning (escalating); upgrade pool draw (flat pool with per-lane drought weighting) |
 
 ---
 
@@ -220,7 +220,7 @@ Color philosophy: Warm base palette (ink-wash battlefield tones) with a single a
 - **Combo counter readability at scale** — combo counter UI must remain visible and readable when 100+ enemies are on screen and VFX are firing.
 - **Combo vs. parry priority** — with two active skill systems, players may feel overwhelmed deciding which to focus on. Upgrade categories help by letting players commit to a lane.
 - **Parry balance** — too weak and players ignore it; too strong and the combo system becomes irrelevant. Both systems need distinct, meaningful payoffs.
-- **Upgrade monotony** — 15-18 upgrades across 4 categories; must feel varied enough that runs don't all converge on the same build.
+- **Upgrade monotony** — 24 upgrades across 3 lanes + Modifier type; ~12 picks per run means roughly half the catalogue appears, so runs should diverge. Must feel varied enough that runs don't all converge on the same build.
 
 ### Technical Risks
 - **Combo state tracking** — the combo counter must track "2 consecutive hits on enemies" reliably across auto-attack timing, enemy death (hit that kills doesn't feel wasted), and reset conditions. Needs careful implementation.
@@ -247,8 +247,8 @@ Color philosophy: Warm base palette (ink-wash battlefield tones) with a single a
 1. Character auto-attacks enemies within melee range automatically
 2. Combo counter: 2 consecutive hits → 3rd hit triggers Finisher (stronger hit, larger area, distinct VFX/SFX)
 3. Enemies telegraph attacks (enemy flash + player ring indicator); parry button triggers burst + fills momentum meter
-4. Momentum meter resets on taking damage; combo counter also resets on damage; higher momentum = larger parry burst
-5. XP drops → level up → 3 upgrade options drawn from 4 categories (Combo / Parry / Auto-attack / Survivability)
+4. Momentum meter and combo counter reset on taking damage when the hit deals at least `reset_damage_threshold` effective damage (default 3 — trivial sub-threshold grazes do not reset; see Damage & Health GDD); higher momentum = larger parry burst
+5. XP drops → level up → 3 upgrade options drawn from a 24-upgrade flat pool across 3 lanes (Combo / Parry / Auto-attack) plus Modifiers (3-pick cap)
 6. 20-minute timer → survive = win screen with stats; die = death screen with stats + retry
 7. 3 general characters at run start (different Finisher shapes: Guan Yu ring cleave / Zhao Yun cone thrust / Lu Bu ground slam)
 8. 5 enemy types (3 basic infantry, 1 elite per 5-min checkpoint, 1 final boss at 18 min)
@@ -265,8 +265,8 @@ Color philosophy: Warm base palette (ink-wash battlefield tones) with a single a
 
 | Tier | Content | Features | Timeline |
 |---|---|---|---|
-| **MVP** | 1 map, 5 enemy types, 3 generals, 15-18 upgrades (4 categories) | Core loop: combo finisher + parry + momentum + auto-attack + XP + 20-min timer | 3-6 weeks |
-| **Vertical Slice** | 1 map, 5 enemy types, 3 generals, 24 upgrades | Core loop + run score screen + basic menus + 3-hit audio escalation | +2-4 weeks |
+| **MVP** | 1 map, 5 enemy types, 3 generals, 24 upgrades (3 lanes + Modifier type) | Core loop: combo finisher + parry + momentum + auto-attack + XP + 20-min timer | 3-6 weeks |
+| **Vertical Slice** | 1 map, 5 enemy types, 3 generals, 24 upgrades (polished) | Core loop + run score screen + basic menus + 3-hit audio escalation | +2-4 weeks |
 | **Expanded** | 2 maps, 7 enemy types, 5 generals, 36 upgrades | Meta unlocks, 5th general with unique Finisher mechanic, settings, Three Kingdoms art | +1-2 months |
 | **Full Vision** | 3 maps, 10+ enemy types, 8+ generals | All features, polish, full Three Kingdoms aesthetic, Steam release candidate | Multi-month |
 | **Stretch / Army Scale** | See Expansion Concepts section | Army + supply mechanics, squad-based enemies, map objectives (forts/villages/cities) | Post-launch |
@@ -324,9 +324,9 @@ All values are tuning-time constants unless marked runtime-dynamic.
 
 | Variable | Definition | Value |
 |----------|-----------|-------|
-| `base_attack` | Standard auto-attack damage | Tuning constant (set in Combat System GDD) |
+| `base_attack` | Standard auto-attack damage | Tuning constant (owned by General Characters GDD; default 10) |
 | `finisher_damage` | Finisher hit damage | `base_attack × 2.5` |
-| `base_radius` | Standard auto-attack hit radius | Tuning constant (set in Combat System GDD) |
+| `base_radius` | Standard auto-attack hit radius | Tuning constant (owned by General Characters GDD; default 1.5u) |
 | `finisher_radius` | Finisher AoE radius | `base_radius × 2.0` |
 
 *Example:* If `base_attack = 10`, Finisher deals 25 damage. If `base_radius = 1.5 units`, Finisher AoE = 3.0 units.
@@ -361,10 +361,13 @@ Formula: `density(step) = min(base_density × 1.2^step, base_density × 5)` | `s
 
 ### Upgrade Pool Draw
 
-- Pool: 15–18 one-time-pick upgrades across 4 categories (~3–4 per category)
-- Draw: 3 options per level-up, without replacement from eligible pool
-- Pity rule: No more than 2 consecutive offers without at least one upgrade from the player's most-picked category (if that category is not exhausted)
-- Category exhaustion: When a category is fully picked, it drops from the draw pool
+*Authoritative spec: `upgrade-definition.md`. Summary only here.*
+
+- Pool: 24 one-time-pick upgrades — 6 each across 3 skill lanes (Combo / Parry / Auto-attack) + 6 Modifiers
+- Draw: 3 options per level-up, without replacement from the eligible pool
+- Drought weighting (replaces the old pity rule): if a skill lane goes 4 consecutive draws unrepresented, its eligible upgrades get 2× draw weight until the lane next appears. Modifiers do not participate in drought tracking.
+- Modifier pick cap: at most 3 Modifier picks per run; remaining Modifiers leave the pool after the 3rd pick
+- Category exhaustion: when a lane (or remaining Modifiers after the cap) is fully picked, it drops from the draw pool
 - Stacking: Not implemented in MVP — each upgrade is a unique one-time pick
 
 ---
@@ -434,9 +437,11 @@ Each system GDD must reference this concept doc as its parent and must not contr
 | `wave_density_step` | 1.2× | 1.1×–1.4× | Escalation pace; above 1.4× produces difficulty spikes |
 | `wave_speed_step` | 1.1× | 1.05×–1.2× | Enemy movement escalation |
 | `wave_density_cap` | 5.0× | 3.0×–8.0× | Maximum late-run density |
-| `pity_threshold` | **3 draws** | 2–5 | Consecutive draws without the player's most-picked category before pity triggers. Updated from 2 → 3 in upgrade-definition.md: threshold of 2 was too aggressive (railroaded lane identity). Authoritative value now owned by upgrade-definition.md. |
-| `combo_counter_timeout` | TBD | — | Seconds without a hit before counter resets; set in Combat System GDD |
-| `parry_window_ms` | TBD | — | Parry timing window duration in ms; set in Parry System GDD |
+| `drought_weighting_threshold` | **4 draws** | 2–6 | Consecutive draws a skill lane can go unrepresented before its upgrades get the drought weight. Owned by upgrade-definition.md. (Replaces the removed `pity_threshold` / pity rule.) |
+| `drought_weighting_multiplier` | **2×** | 1.5×–3× | Draw-weight boost applied to a drought lane's upgrades. Owned by upgrade-definition.md. |
+| `modifier_pick_cap` | **3 picks** | 2–5 | Maximum Modifier upgrades per run. Owned by upgrade-definition.md. |
+| `combo_counter_timeout` | 3.0s | 1.5–6.0s | Seconds without a landing swing before the combo counter resets; owned by combo-system.md |
+| `parry_window` | telegraph-derived | — | The parry window per attack = that attack's `TelegraphDurationMs` (enemy-definition); P5 extends +75ms; the input buffer front-extends +120ms (input-manager). No single global value — owned by parry-system.md |
 
 ---
 
@@ -448,9 +453,9 @@ All of the following must pass before MVP is considered shippable:
 |---|-----------|-----------|------|
 | AC-01 | Character auto-attacks the nearest enemy within `melee_range` units. No attack fires if no enemy is within range. | Unit test | BLOCKING |
 | AC-02 | Combo counter increments to 1 on 1st hit, 2 on 2nd hit. On the 3rd consecutive hit, a Finisher fires dealing `base_attack × 2.5` damage in radius `base_radius × 2.0`. Counter resets to 0 after Finisher. | Unit test | BLOCKING |
-| AC-03 | Combo counter resets to 0 when player takes damage. Counter does NOT reset on a successful parry. | Unit test | BLOCKING |
+| AC-03 | Combo counter resets to 0 when player takes damage of at least `reset_damage_threshold` effective (default 3). A sub-threshold graze deals HP damage but does NOT reset the counter. Counter does NOT reset on a successful parry. | Unit test | BLOCKING |
 | AC-04 | Parry input within the window triggers a burst dealing `base_burst × (0.25 + momentum/100 × 1.75)`. At `momentum = 0`, burst = `base_burst × 0.25`. | Unit test | BLOCKING |
-| AC-05 | Successful parry fills the momentum meter. Taking damage resets momentum to 0 in the same frame that combo counter resets. | Unit test | BLOCKING |
+| AC-05 | Successful parry fills the momentum meter. Taking a hit of at least `reset_damage_threshold` effective damage reduces momentum by `momentum × momentum_reset_multiplier` (default 1.0 = full reset; P4 "Unbroken Form" sets 0.5 = half) in the same frame the combo counter resets. Sub-threshold grazes do not reset momentum. | Unit test | BLOCKING |
 | AC-06 | Enemies drop XP. Sufficient XP accumulation triggers a level-up presenting 3 upgrade options drawn from the eligible pool without replacement. | Integration test | BLOCKING |
 | AC-07 | 20-minute timer counts down. At 0:00 with player alive: win screen with stats. On player death: death screen with stats and retry. Retry resets all state (counter=0, meter=0, XP=0, timer=20:00, no enemies). | Integration test | BLOCKING |
 | AC-08 | 3 general characters are selectable at run start. Each Finisher fires with the correct AoE geometry (ring / cone / point-burst). | Smoke check | ADVISORY |

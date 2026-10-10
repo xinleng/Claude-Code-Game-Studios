@@ -1,8 +1,8 @@
 # Damage & Health
 
-> **Status**: In Revision — 2026-05-18
+> **Status**: Approved — 2026-06-18 (amended 2026-06-19: added `OpenInvulnerability` API per cross-review)
 > **Author**: xinleng + Claude Code agents
-> **Last Updated**: 2026-05-15
+> **Last Updated**: 2026-06-19
 > **Implements Pillar**: Pillar 1 (Readable Chaos), Pillar 2 (Skill Has a Lane)
 
 ## Overview
@@ -78,6 +78,12 @@ After any `DamageTaken` event, the player enters an invulnerable window for `inv
 - Parry input is **still processed** — iframes do not block parry resolution
 - The iframe window does not stack or reset. A second hit during iframes is discarded; the timer continues counting down from the original start time of the first hit
 
+**On-request invulnerability API (`OpenInvulnerability(duration_ms)`).** Damage & Health is the single owner of player invulnerability and exposes a public method `OpenInvulnerability(int duration_ms)` so other systems can grant i-frames *without* an incoming hit. The **Parry System** calls it on a successful parry (`parry_invuln_ms`, default 300ms) and the **Dodge System** calls it on a dash (`dodge_invuln_ms`, default 400ms). Semantics:
+- It opens (or extends) the same single invulnerability window used by the post-`DamageTaken` iframe. There is exactly one invulnerability timer; the iframe rule above and this API share it.
+- **Overlap resolution — latest-end-time wins.** `_iframeEndTime = max(_iframeEndTime, Time.unscaledTime + duration_ms/1000)`. A new request never *shortens* an active window (e.g., a dodge during a post-hit iframe extends to whichever ends later; a parry during a dodge keeps the longer of the two). The window never stacks beyond a single end-time.
+- It uses `Time.unscaledTime` (Contract #2), consistent with the hit-triggered iframe timer.
+- It fires no `DamageTaken` and changes no HP — it only opens the invulnerable window.
+
 **6. HP regeneration (upgrade-gated)**
 
 `regen_rate` is 0.0 HP/s at run start. Survivability upgrades may increase it.
@@ -146,8 +152,10 @@ effective_damage = max(1, floor(raw_damage × (1 - damage_reduction)))
 | Variable | Symbol | Type | Range | Description |
 |---|---|---|---|---|
 | Raw damage | `raw_damage` | float | 1–40 | Unresolved `AttackDamage` forwarded by Parry System |
-| Damage reduction | `damage_reduction` | float | 0.0–0.75 | Multiplicative reduction from upgrades; 0.0 at run start; capped at 0.75 |
+| Damage reduction | `damage_reduction` | float | 0.0–`damage_reduction_cap` | Multiplicative reduction from upgrades; 0.0 at run start; capped at `damage_reduction_cap` (default 0.75) |
 | Effective damage | `effective_damage` | int | 1–40 | Final HP subtracted; floored to int, minimum 1 enforced |
+
+> **Cap note:** Prose, examples, and acceptance criteria below assume the default `damage_reduction_cap` of **0.75**. If the cap is retuned (knob range 0.60–0.85), the `× 0.25` literals in examples and AC-DH-04 / AC-DH-10 must be re-derived as `× (1 − damage_reduction_cap)`.
 
 **Output range:** 1–40 (current enemy set). Formula imposes no upper cap — any new enemy with raw_damage > 40 will produce effective_damage above this range without a formula change. Document in the Enemy Definition GDD if the raw_damage ceiling changes.
 **Example:** Levy Soldier (5 raw) at max reduction: `max(1, floor(5 × 0.25)) = max(1, 1) = 1`. Iron Captain counter-hit (25 raw) at max reduction: `max(1, floor(25 × 0.25)) = 6`.
@@ -218,8 +226,9 @@ max_hp = base_max_hp + max_hp_bonus
 
 | System | Direction | Nature | Interface |
 |---|---|---|---|
-| **Parry System** | Bidirectional | Hard | Parry System forwards resolved `AttackDamage` as `raw_damage` AND the `DamageType` from the originating AttackEvent when attack goes unparried. Damage & Health reads both. **DamageType source contract:** The AttackEvent contract (enemy-definition.md) must add a `DamageType` field so the Parry System can forward it. Slam (`DamageType.Slam`) is non-parriable — it bypasses Parry System and is forwarded directly from Enemy AI to Damage & Health, carrying `DamageType.Slam` explicitly. This path must be documented in the Enemy AI GDD. Parry System also subscribes to `DamageTaken` to reset `momentum_meter`. |
-| **Combo System** | Damage & Health → Combo | Hard | Subscribes to `DamageTaken` to reset `combo_counter → 0`. |
+| **Parry System** | Bidirectional | Hard | Parry System forwards resolved `AttackDamage` as `raw_damage` AND the `DamageType` from the originating AttackEvent when attack goes unparried. Damage & Health reads both. **DamageType source contract:** The AttackEvent contract (enemy-definition.md) carries a `DamageType` field (`Standard | CounterHit | Slam | Projectile`, assigned deterministically per emission) which the Parry System forwards unchanged to Damage & Health. Slam (`DamageType.Slam`) is non-parriable — it bypasses Parry System and is forwarded directly from Enemy AI to Damage & Health, carrying `DamageType.Slam` explicitly. This path must be documented in the Enemy AI GDD. Parry System also subscribes to `DamageTaken` to reset `momentum_meter`, and calls `OpenInvulnerability(parry_invuln_ms)` (Rule 5) on a successful parry. |
+| **Dodge System** | Dodge → Damage & Health | Hard | Dodge System calls `OpenInvulnerability(dodge_invuln_ms)` (Rule 5) on a dash to grant i-frames; latest-end-time overlap resolution applies. |
+| **Combo System** | Damage & Health → Combo | Hard | Subscribes to `DamageTaken` to reset `combo_counter → 0`. Combo also applies C5 Finisher heal to player HP (capped at `max_hp`). |
 | **Run Session Manager** | Damage & Health → Run Session Manager | Hard | Subscribes to `PlayerDead`; drives death screen, stats aggregation, retry. Owns the reset API called at run start/retry. |
 | **Combat Feedback UI** | Damage & Health → Combat Feedback UI | Hard | Subscribes to `DamageTaken` for HP bar animation and `DamageType`-specific hit feedback (CounterHit = distinct screen shake). |
 | **Run UI** | Damage & Health → Run UI | Soft | Run UI reads `current_hp` and `max_hp` for HP bar display. Interface detail (polling vs. event notification) delegated to Run UI GDD. |
@@ -285,7 +294,7 @@ Architectural requirements that must be established before any Damage & Health c
 | AC-DH-08 | **GIVEN** `regen_rate == 5.0` HP/s, `current_hp == 95`, `max_hp == 100`, and three frames elapse each with `delta_time == 0.5s`, **WHEN** regen ticks are applied each frame, **THEN** `current_hp` reaches 100 and is clamped there; `DamageTaken` is never emitted during regen. **Pass condition:** assert `current_hp == 100.0` (to within 0.001); assert `DamageTaken` count == 0. | Logic | BLOCKING |
 | AC-DH-09 | **GIVEN** `current_hp == 10` and an unparried attack with `raw_damage == 10` resolves (HP → 0), then a second attack with `raw_damage == 5` arrives while in Dead state, **WHEN** both events are processed, **THEN** (a) `DamageTaken` fires before `PlayerDead` in the first frame, (b) `PlayerDead.FinalHP == 0.0` and `PlayerDead.TimeOfDeath` is a positive float, (c) `PlayerDead` fires exactly once. **Pass condition:** using a custom event-recorder that logs events by emission order (each subscriber appends to a `List<string>` in order of callback): assert event log `[0] == "DamageTaken"` and `[1] == "PlayerDead"`; assert `PlayerDead.FinalHP == 0.0f`; assert `PlayerDead.TimeOfDeath > 0.0f`; assert `PlayerDead` count == 1; **assert `DamageTaken` count == 1** (counter is NOT reset between the two attacks — total count over the full test case must equal 1; the second attack in Dead state must NOT emit DamageTaken). | Logic | BLOCKING |
 | AC-DH-10 | **GIVEN** an upgrade attempts to apply `damage_reduction == 0.90` (above `damage_reduction_cap == 0.75`), **WHEN** the value is applied at upgrade-apply time, **THEN** `damage_reduction` is clamped to 0.75 and a designer error is logged (run continues; no exception). **Boundary:** `damage_reduction == 0.75` applies without logging an error. **Pass condition:** assert `damage_reduction == 0.75`; assert error log contains designer-error marker. | Logic | BLOCKING |
-| AC-DH-11 | **GIVEN** a run ended in Dead state with `current_hp == 0`, `max_hp_bonus == 40` (from upgrades, so `max_hp == 140`), `damage_reduction == 0.50`, `regen_rate == 2.0`, **WHEN** Run Session Manager triggers the retry reset API, **THEN** `max_hp_bonus == 0`, `max_hp == 100` (base), `current_hp == 100`, `damage_reduction == 0.0`, `regen_rate == 0.0`, state is Vulnerable. **Pass condition:** assert all five state values post-reset; assert a test attack with `raw_damage == 10` produces `effective_damage == 10` and `current_hp == 90` (confirms damage pipeline active and damage_reduction is 0). | Integration | BLOCKING |
+| AC-DH-11 | **GIVEN** a run ended in Dead state with `current_hp == 0`, `max_hp_bonus == 40` (from upgrades, so `max_hp == 140`), `damage_reduction == 0.50`, `regen_rate == 1.5` (the `regen_rate_max` ceiling), **WHEN** Run Session Manager triggers the retry reset API, **THEN** `max_hp_bonus == 0`, `max_hp == 100` (base), `current_hp == 100`, `damage_reduction == 0.0`, `regen_rate == 0.0`, state is Vulnerable. **Pass condition:** assert all five state values post-reset; assert a test attack with `raw_damage == 10` produces `effective_damage == 10` and `current_hp == 90` (confirms damage pipeline active and damage_reduction is 0). | Integration | BLOCKING |
 
 | AC-DH-12 | **GIVEN** an `AttackEvent` arrives with `raw_damage == 0`, **WHEN** Damage & Health processes the event, **THEN** `DamageTaken` is NOT emitted, `current_hp` is unchanged, and a designer error is logged. **Boundary:** `raw_damage == -1` (negative) produces the same result. **Pass condition:** assert `DamageTaken` count == 0 (reset counter before test); assert `current_hp` unchanged; assert error log contains designer-error marker. | Logic | BLOCKING |
 | AC-DH-13 | **GIVEN** `reset_damage_threshold == 3`, `combo_counter == 2`, `momentum_meter == 80`, player in Vulnerable state, and an unparried attack resolves with `raw_damage == 5`, `damage_reduction == 0.75` → `effective_damage == 1` (below threshold), **WHEN** `DamageTaken` fires, **THEN** `current_hp` decreases by 1 AND `combo_counter` remains 2 AND `momentum_meter` remains 80 (no resets). Iframes begin normally. **Pass condition:** assert `current_hp == prior_hp - 1`; assert `combo_counter == 2`; assert `momentum_meter == 80`. **Contrast:** repeat with `damage_reduction == 0.0` → `effective_damage == 5` (≥ threshold) → assert `combo_counter == 0` and `momentum_meter == 0`. | Logic | BLOCKING |

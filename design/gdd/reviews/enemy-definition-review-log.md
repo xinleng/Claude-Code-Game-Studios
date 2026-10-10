@@ -1,5 +1,29 @@
 # Review Log: Enemy Definition
 
+## Addendum — 2026-06-18 — post-approval field addition (still Approved)
+During the same-day Damage & Health re-review, a `DamageType : enum {Standard|CounterHit|Slam|Projectile}` field was added to the AttackEvent contract to satisfy a bidirectional contract Damage & Health depends on. This is a purely additive change consistent with enemy-definition's own existing forwarding contracts (Combat Feedback UI / Parry dependencies). Assignment is deterministic per emission (CounterHit↔IsCounterHit, Slam↔Warlord P2 slam, Projectile↔Archer, else Standard). Approval stands.
+
+## Review — 2026-06-18 — Verdict: APPROVED
+Scope signal: L
+Specialists: lean mode — single-session adversarial analysis (no agent spawns)
+Blocking items: 0 | Recommended: 2
+Summary: Fresh re-review after the 2026-05-28 revision. All 19 prior blockers traced against current text and confirmed resolved (Roar watchdog, runStartTime contract, serialized Phase 2 SO refs, cooldown jitter, int current_hp, DefaultExecutionOrder(-100), velocity=0 locks, stagger-resist feedback contract, Dodge fallback, AC-18/AC-20). No new blocking issues. Two advisory items: non-sequential AC numbering (cosmetic) and bidirectional-dependency back-references pending downstream GDD authoring. OQ-04 (Dodge System) remains open but has a documented provisional fallback. Doc moved to Approved.
+Prior verdict resolved: Yes (19 blockers from 2026-05-28 closed; 0 new found)
+
+## Revision — 2026-05-28 — 19 blockers resolved (re-review required)
+Scope signal: L
+Specialists: N/A — revision pass only (no fresh specialist review)
+Blocking items resolved: 19
+Summary: Four Tier S decisions made by user: (S1) Roar watchdog clears IsPhaseTransitionLocked and defers to normal Dead check — does not force-kill; (S2) runStartTime recorded by RunSessionManager using Time.time, passed to EnemySystemManager at init; (S3) Phase 2 SO uses direct serialized references on prefab (not Addressables); (S4) spawn-time cooldown jitter added (initialCooldownMs = Random.Range(0, attack_cooldown_ms)). Tier A: stagger-resist feedback contract added to Combat Feedback UI dependency; Pillar 2 cross-GDD contract language strengthened in parry burst rule; Dodge System provisional fallback (temporary Parriable=true stub) specified. Tier B: current_hp declared as int; EnemySystemManager marked [DefaultExecutionOrder(-100)]; Staggered and Roar states now explicitly specify velocity=0 movement lock. Tier C: AC-18 (spawn jitter) and AC-20 (watchdog) added; AC numbering gap closed.
+Prior verdict resolved: Partial — fourth review found 19 blockers; all resolved in-session. Full re-review not yet run.
+
+## Review — 2026-05-28 — Verdict: NEEDS REVISION (19 blockers found)
+Scope signal: L
+Specialists: game-designer, systems-designer, qa-lead, creative-director
+Blocking items: 19 | Recommended: 6
+Summary: Fourth review after three prior rounds (44 total prior blockers resolved). Foundation is sound. 19 new blockers across four tiers: Tier S (4) — Roar watchdog contradicts HP=1 clamp, runStartTime source unspecified, Phase 2 SO load strategy unspecified, cooldown sync burst from synchronized wave spawns. Tier A (4) — stagger-resist feedback contract missing, Pillar 2 cross-GDD language weak, Dodge System fallback absent. Tier B (8) — current_hp type undeclared, script execution order unspecified, movement lock during Staggered/Roar unspecified, confirmed existing guards on OverlapSphere/SetActive/stagger-resist-zones. Tier C (3) — AC-18 numbering gap, watchdog has no testable AC, AC vagueness. All 19 resolved in same session.
+Prior verdict resolved: Yes (12 prior blockers from 2026-05-18 review were closed; 19 new found)
+
 ## Review — 2026-05-18 — Verdict: MAJOR REVISION NEEDED (revised in session → re-review required)
 Scope signal: XL
 Specialists: game-designer, systems-designer, qa-lead, unity-specialist, creative-director

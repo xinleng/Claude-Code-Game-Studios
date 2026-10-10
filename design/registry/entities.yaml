@@ -37,7 +37,7 @@
 #   Each entry: name, status, source, referenced_by[], attributes{}, added, revised
 
 version: 1
-last_updated: "2026-05-19"  # upgrade-definition designed: added pity_threshold (value 3, changed from game-concept.md default of 2); updated referenced_by for reset_damage_threshold, regen_rate_max
+last_updated: "2026-06-19"  # design-system input-manager: added parry_input_buffer_ms; added input-manager.md to zhao_yun_input_direction_window_ms referenced_by. (2026-06-18: review-all-gdds synced game-concept.md, cleared pity_threshold referenced_by.) (2026-06-07: deprecated pity_threshold; added upgrade-definition.md to referenced_by for damage_reduction_cap, base_max_hp, base_attack, base_radius)
 
 # ─── ENTITIES ────────────────────────────────────────────────────────────────
 # Named game-world objects: enemies, NPCs, characters, factions, bosses.
@@ -343,6 +343,7 @@ constants:
     source: design/gdd/general-characters.md
     referenced_by:
       - design/gdd/general-characters.md
+      - design/gdd/upgrade-definition.md  # A1 overrides base_attack 10 → 14
     value: 10
     unit: damage
     notes: "Shared default for all generals. Source of truth here; consumed by Combat Core (auto-attack) and Combo System (Finisher damage formula)."
@@ -354,6 +355,7 @@ constants:
     source: design/gdd/general-characters.md
     referenced_by:
       - design/gdd/general-characters.md
+      - design/gdd/upgrade-definition.md  # A3 overrides base_radius 1.5u → 2.25u
     value: 1.5
     unit: units
     notes: "Shared default melee radius for all generals. Source of truth here; consumed by Combo System (Finisher AoE formula)."
@@ -376,6 +378,7 @@ constants:
     source: design/gdd/general-characters.md
     referenced_by:
       - design/gdd/general-characters.md
+      - design/gdd/input-manager.md  # Input Manager supplies LastSteerDirection.steer_time; Combo System applies this window to it
     value: 300
     unit: milliseconds
     notes: "How recent a directional input must be to count for Zhao Yun's cone orientation. If no input within this window, falls back to nearest-enemy direction."
@@ -387,6 +390,7 @@ constants:
     source: design/gdd/damage-health.md
     referenced_by:
       - design/gdd/damage-health.md
+      - design/gdd/upgrade-definition.md  # S1 adds max_hp_bonus on top of base_max_hp (100 → 140)
     value: 100
     unit: HP
     notes: "Player starting max HP per run. Survivability upgrades add flat bonus via max_hp_bonus. Source of truth here; Run Session Manager reads at retry; Upgrade Definition GDD reads when applying HP upgrades."
@@ -429,22 +433,21 @@ constants:
     revised: "2026-05-19"
 
   - name: pity_threshold
-    status: active
+    status: deprecated  # was: active — pity rule removed from upgrade-definition.md (OQ-03, 2026-05-29); replaced by drought weighting (drought_weighting_threshold=4, drought_weighting_multiplier=2×)
     source: design/gdd/upgrade-definition.md
-    referenced_by:
-      - design/gdd/game-concept.md
-      - design/gdd/upgrade-definition.md
+    referenced_by: []  # game-concept.md synced 2026-06-18 (OQ-10 resolved) — pity rule replaced by drought weighting; no live references remain
     value: 3
     unit: draws
-    notes: "Maximum consecutive draws without the player's most-picked upgrade category before the next draw is guaranteed to include that category. Changed from 2 (game-concept.md default) to 3 in upgrade-definition.md to preserve player agency (2 was a rail, 3 is a safety net). Progression System GDD must implement this rule."
+    notes: "DEPRECATED 2026-06-07. The pity rule (guaranteed category after N dry draws) was cut from upgrade-definition.md and replaced by drought weighting on a flat draw pool — a lane that goes 4 consecutive draws unrepresented gets 2× draw weight until it next appears. The pity/drought parameters are owned by upgrade-definition.md and implemented by the Progression System GDD (not yet authored). game-concept.md was synced 2026-06-18 (OQ-10 resolved) — it now describes drought weighting and the deprecated pity_threshold knob was removed from its Tuning Knobs table."
     added: 2026-05-19
-    revised: ""
+    revised: "2026-06-18"
 
   - name: damage_reduction_cap
     status: active
     source: design/gdd/damage-health.md
     referenced_by:
       - design/gdd/damage-health.md
+      - design/gdd/upgrade-definition.md  # S2+S3(+S6) cumulative reduction capped here (max 0.60 in MVP)
     value: 0.75
     unit: multiplier
     notes: "Maximum damage_reduction Survivability upgrades can provide. Enforced at upgrade-apply time in Damage & Health. Above cap: clamped and designer error logged."
@@ -471,6 +474,17 @@ constants:
     unit: ratio
     notes: "HP fraction at which Warlord Phase 2 transition fires. Default: 50% max HP."
     added: 2026-05-11
+    revised: ""
+
+  - name: parry_input_buffer_ms
+    status: active
+    source: design/gdd/input-manager.md
+    referenced_by:
+      - design/gdd/input-manager.md
+    value: 120
+    unit: milliseconds
+    notes: "Front-extension forgiveness for parry presses. A captured Parry press stays 'live' (consumable) for this duration. Composes with the Parry System window: effective acceptance = [window_open - parry_input_buffer_ms, window_close]. Owned by Input Manager; the Parry System GDD (not yet authored) will reference it when defining parry_window_ms. Default estimate — validate in prototype (OQ-01)."
+    added: 2026-06-19
     revised: ""
 
 # Example:

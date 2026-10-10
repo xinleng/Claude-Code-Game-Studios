@@ -1,5 +1,12 @@
 # Review Log: Damage & Health
 
+## Review — 2026-06-18 — Verdict: NEEDS REVISION → resolved in session → APPROVED
+Scope signal: M
+Specialists: lean mode — single-session adversarial analysis (no agent spawns)
+Blocking items: 1 | Recommended: 2 | Nice-to-have: 1
+Summary: Fresh re-review after the 2026-05-18 revision (never re-reviewed since). All 10 prior blockers traced and confirmed resolved. One new blocker found: the `DamageType` enum carried on `DamageTaken` and required by L221 did not exist on the AttackEvent in the (just-approved) enemy-definition.md — a broken bidirectional contract. Resolved in-session (user chose to add the field): added `DamageType : enum {Standard|CounterHit|Slam|Projectile}` to the AttackEvent contract in enemy-definition.md with deterministic per-emission assignment rules; updated the DamageType source contract here to reference the now-existing field. Advisory fixes applied: damage_reduction range now references `damage_reduction_cap` symbolically with a cap-note; AC-DH-11 fixture regen_rate 2.0 → 1.5 (was above the cap); stale header metadata corrected. Doc moved to Approved.
+Prior verdict resolved: Yes (10 blockers from 2026-05-18 closed; 1 new found and resolved in-session)
+
 ## Review — 2026-05-18 — Verdict: NEEDS REVISION (revised in session)
 Scope signal: M
 Specialists: game-designer, systems-designer, qa-lead, creative-director

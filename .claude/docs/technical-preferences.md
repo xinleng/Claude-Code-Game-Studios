@@ -40,6 +40,7 @@
 - **Frame Budget**: 16.6ms
 - **Draw Calls**: ≤1500
 - **Memory Ceiling**: 4GB
+- **Min-Spec (benchmark reference, pinned 2026-10-10)**: NVIDIA GTX 1650 (4GB VRAM) · AMD Ryzen 5 3600 (6C/12T) · 16GB RAM · 1080p. All performance gates (enemy tick ≤4ms, Animator+skinning ≤3.0ms, ≤1,100-draw early warning) are measured in a player build on this spec — never in the Editor.
 
 ## Testing
 
@@ -50,17 +51,46 @@
 ## Forbidden Patterns
 
 <!-- Add patterns that should never appear in this project's codebase -->
-- [None configured yet — add as architectural decisions are made]
+Full list with sources: `docs/architecture/control-manifest.md` (Manifest Version 2026-10-10). Headline rules:
+
+- Referencing `Unity.InputSystem` outside the `Dynasty.Input` assembly (ADR-0004)
+- Mixing `Time.time`- and `Time.unscaledTime`-derived timestamps — use `IGameClock.RunTime` (ADR-0010)
+- `SceneManager.LoadScene`, `Resources.Load`, Addressables in MVP (ADR-0012, ADR-0006)
+- `Update()`/`FixedUpdate()` in combat systems; per-enemy `Update()` (ADR-0001/0002)
+- `UnityEvent`/`SendMessage` on gameplay paths (ADR-0003)
+- Physics colliders on enemies for queries; allocating physics queries; O(n²) range checks (ADR-0007)
+- `SetActive(false)`/`Destroy` on pooled objects outside `ObjectPool.ReturnToPool`; static `AttackerId` (ADR-0005)
+- Singletons / `FindObjectOfType` wiring — DI at Bootstrap only (ADR-0002/0012)
+- Hardcoded gameplay values (ADR-0006)
+- `MaterialPropertyBlock`/`.material` on crowd renderers; Humanoid rigs; root motion; gameplay animation events (art bible §8)
+- UGUI for new screens; `VisualElement.transform`; URP Compatibility Mode passes (ADR-0008/0009)
 
 ## Allowed Libraries / Addons
 
 <!-- Add approved third-party dependencies here. Only add when actively integrating — not speculatively. -->
-- [None configured yet — add as dependencies are approved]
+- Input System package (exact version pinned in `Packages/manifest.json`) — ADR-0004
+- UI Toolkit — ADR-0009
+- VFX Graph — ADR-0008
+- Unity Test Framework + `game-ci/unity-test-runner@v4` — ADR-0010
+- No third-party libraries approved yet
 
 ## Architecture Decisions Log
 
 <!-- Quick reference linking to full ADRs in docs/architecture/ -->
-- [No ADRs yet — use /architecture-decision to create one]
+All Accepted. ADR-0001…0010 amended 2026-10-10 by the independent `/architecture-review`.
+
+- ADR-0001 — Entity architecture: MonoBehaviour + central manager (DOTS deferred, two-step escalation)
+- ADR-0002 — Frame execution order + CombatFrame orchestrator (+ Finisher handshake)
+- ADR-0003 — Struct-delegate events + ordered DamageTaken dispatch
+- ADR-0004 — Single input authority, parry buffer, single action-asset instance
+- ADR-0005 — Object pooling + enemy lifecycle
+- ADR-0006 — ScriptableObject data configuration (no Addressables in MVP)
+- ADR-0007 — Uniform-grid spatial queries + separation steering (no enemy colliders)
+- ADR-0008 — Telegraph/combat VFX rendering (VFX Graph single-system instancing)
+- ADR-0009 — UI Toolkit runtime UI, event-driven presenters
+- ADR-0010 — Deterministic test harness + unified run clock (`IGameClock.RunTime`)
+- ADR-0011 — Audio mix architecture — *staged, author before VFX & Audio implementation*
+- ADR-0012 — Single-scene boot flow, Bootstrap composition root, RSM-owned run clock + arena bounds
 
 ## Engine Specialists
 

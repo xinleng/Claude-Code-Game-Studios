@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dynasty Survivors — Development Dashboard</title>
+<style>
+  :root{
+    --bg:#0e1014; --panel:#161a21; --panel2:#1d222b; --line:#2a313c;
+    --ink:#e8eaed; --muted:#9aa3b0; --faint:#6b7382;
+    --red:#c8362f; --gold:#d4a24e; --jade:#3fb27f; --blue:#5b8def; --amber:#e0a92e;
+    --done:#3fb27f; --active:#e0a92e; --todo:#4a5160; --risk:#c8362f;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+    font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:var(--blue);text-decoration:none}
+  .wrap{max-width:1280px;margin:0 auto;padding:28px 24px 64px}
+
+  /* Header */
+  header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;
+    gap:16px;border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:24px}
+  .title h1{margin:0;font-size:26px;letter-spacing:.3px}
+  .title h1 .accent{color:var(--red)}
+  .title .sub{color:var(--muted);margin-top:4px;font-size:13px}
+  .meta{display:flex;gap:22px;flex-wrap:wrap}
+  .meta .m{text-align:right}
+  .meta .m .k{color:var(--faint);font-size:11px;text-transform:uppercase;letter-spacing:.6px}
+  .meta .m .v{font-size:15px;font-weight:600;margin-top:2px}
+  .phase-pill{display:inline-block;background:linear-gradient(90deg,var(--red),#9c2a25);
+    color:#fff;padding:4px 12px;border-radius:20px;font-weight:600;font-size:12px;letter-spacing:.4px}
+
+  /* Section */
+  h2.sec{font-size:13px;text-transform:uppercase;letter-spacing:1.2px;color:var(--gold);
+    margin:34px 0 14px;font-weight:700;display:flex;align-items:center;gap:10px}
+  h2.sec::after{content:"";flex:1;height:1px;background:var(--line)}
+
+  /* KPI cards */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;position:relative;overflow:hidden}
+  .kpi .big{font-size:30px;font-weight:700;line-height:1}
+  .kpi .lbl{color:var(--muted);font-size:12px;margin-top:6px}
+  .kpi .bar{height:5px;border-radius:3px;background:var(--panel2);margin-top:12px;overflow:hidden}
+  .kpi .bar > i{display:block;height:100%;border-radius:3px}
+  .kpi small{color:var(--faint);font-size:11px}
+
+  /* Pipeline */
+  .pipeline{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+  .stage{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 12px 11px;position:relative}
+  .stage .dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:7px;vertical-align:middle}
+  .stage .nm{font-weight:600;font-size:12.5px;vertical-align:middle}
+  .stage .dt{color:var(--faint);font-size:11px;margin-top:6px;line-height:1.35}
+  .stage.done{border-color:#27513f}
+  .stage.active{border-color:#6b561a;box-shadow:0 0 0 1px #6b561a inset}
+  .dot.done{background:var(--done)} .dot.active{background:var(--active);box-shadow:0 0 8px var(--active)} .dot.todo{background:var(--todo)}
+  .stage .tag{position:absolute;top:10px;right:10px;font-size:9px;letter-spacing:.5px;text-transform:uppercase;color:var(--faint)}
+  .stage.active .tag{color:var(--active)}
+
+  /* Systems grid */
+  .layer-h{color:var(--muted);font-size:12px;font-weight:700;margin:16px 0 8px;letter-spacing:.4px}
+  .systems{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:10px}
+  .sys{background:var(--panel);border:1px solid var(--line);border-left-width:3px;border-radius:8px;padding:11px 12px}
+  .sys .row1{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .sys .nm{font-weight:600;font-size:13px}
+  .sys .cat{color:var(--faint);font-size:11px;margin-top:3px}
+  .badge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:2px 7px;border-radius:20px;white-space:nowrap}
+  .b-approved{background:rgba(63,178,127,.15);color:#5fd29a}
+  .b-designed{background:rgba(91,141,239,.15);color:#85acff}
+  .b-review{background:rgba(224,169,46,.15);color:#f0c45e}
+  .b-todo{background:rgba(120,130,150,.12);color:#8b94a4}
+  .sys.s-approved{border-left-color:var(--jade)}
+  .sys.s-designed{border-left-color:var(--blue)}
+  .sys.s-review{border-left-color:var(--amber)}
+  .sys.s-todo{border-left-color:var(--todo)}
+
+  /* Two-column */
+  .cols{display:grid;grid-template-columns:1.1fr .9fr;gap:22px}
+  @media(max-width:900px){.cols{grid-template-columns:1fr}}
+
+  /* Discipline bars */
+  .disc{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 18px 14px}
+  .drow{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+  .drow:last-child{border-bottom:none}
+  .drow .dn{width:150px;font-size:13px;font-weight:600}
+  .drow .dbar{flex:1;height:8px;background:var(--panel2);border-radius:4px;overflow:hidden}
+  .drow .dbar > i{display:block;height:100%;border-radius:4px}
+  .drow .dp{width:42px;text-align:right;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .drow .dd{width:100%;color:var(--faint);font-size:11px;margin-top:3px}
+  .drow-wrap{display:flex;flex-direction:column}
+
+  /* Risk register */
+  .risks{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .risk{display:flex;gap:11px;padding:11px 16px;border-bottom:1px solid var(--line);align-items:flex-start}
+  .risk:last-child{border-bottom:none}
+  .risk .sev{width:6px;align-self:stretch;border-radius:3px;flex:none}
+  .sev-high{background:var(--red)} .sev-med{background:var(--amber)} .sev-low{background:var(--todo)}
+  .risk .rtext{flex:1}
+  .risk .rmeta{color:var(--faint);font-size:11px;margin-top:3px}
+  .risk .rtag{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px}
+
+  /* Next actions */
+  .actions{display:grid;gap:10px}
+  .act{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 15px;display:flex;gap:13px;align-items:flex-start}
+  .act .num{width:24px;height:24px;border-radius:50%;background:var(--red);color:#fff;font-weight:700;
+    display:flex;align-items:center;justify-content:center;font-size:12px;flex:none}
+  .act .cmd{font-family:"Cascadia Code",Consolas,monospace;font-size:12px;color:var(--gold);
+    background:var(--panel2);padding:1px 7px;border-radius:5px;display:inline-block;margin-top:5px}
+  .act .why{color:var(--muted);font-size:12px;margin-top:4px}
+
+  /* Activity */
+  .log{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 18px}
+  .lrow{display:flex;gap:14px;padding:10px 0;border-bottom:1px solid var(--line)}
+  .lrow:last-child{border-bottom:none}
+  .lrow .ld{color:var(--faint);font-size:11px;width:78px;flex:none;font-variant-numeric:tabular-nums}
+  .lrow .lt{font-size:12.5px}
+
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin:2px 0 4px;color:var(--muted);font-size:11.5px}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:9px;height:9px;border-radius:50%;display:inline-block}
+  footer{margin-top:40px;color:var(--faint);font-size:11px;text-align:center;border-top:1px solid var(--line);padding-top:18px}
+
+  /* Clickable affordance */
+  .sys.clickable,.stage.clickable,.doc-item{cursor:pointer;transition:border-color .12s,transform .06s,background .12s}
+  .sys.clickable:hover{border-color:var(--gold);background:#1b212b}
+  .stage.clickable:hover{border-color:var(--gold)}
+  .sys.clickable:active,.doc-item:active{transform:translateY(1px)}
+  .readhint{font-size:10px;color:var(--faint);margin-top:5px}
+  .sys.clickable:hover .readhint{color:var(--gold)}
+
+  /* Key documents */
+  .docs{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+  .doc-item{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:11px 13px;display:flex;gap:10px;align-items:center}
+  .doc-item:hover{border-color:var(--gold);background:#1b212b}
+  .doc-item .ic{font-size:16px}
+  .doc-item .dn2{font-weight:600;font-size:12.5px}
+  .doc-item .dp2{color:var(--faint);font-size:10.5px;margin-top:2px;word-break:break-all}
+
+  /* Modal doc viewer */
+  .modal{position:fixed;inset:0;background:rgba(6,8,11,.72);backdrop-filter:blur(2px);
+    display:none;align-items:flex-start;justify-content:center;z-index:50;padding:40px 20px}
+  .modal.open{display:flex}
+  .modal-panel{background:var(--bg);border:1px solid var(--line);border-radius:14px;
+    width:min(900px,100%);max-height:88vh;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.5)}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:14px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);border-radius:14px 14px 0 0}
+  .modal-head .mpath{font-family:"Cascadia Code",Consolas,monospace;font-size:12px;color:var(--gold)}
+  .modal-head .x{cursor:pointer;color:var(--muted);font-size:22px;line-height:1;border:none;background:none;padding:0 4px}
+  .modal-head .x:hover{color:var(--ink)}
+  .modal-head .raw{font-size:11px;color:var(--faint);margin-left:auto;margin-right:10px}
+  .modal-body{overflow:auto;padding:22px 28px 32px}
+
+  /* Rendered markdown */
+  .md h1{font-size:24px;margin:.2em 0 .5em;color:var(--ink);border-bottom:1px solid var(--line);padding-bottom:.3em}
+  .md h2{font-size:18px;margin:1.4em 0 .5em;color:var(--gold)}
+  .md h3{font-size:15px;margin:1.2em 0 .4em;color:var(--ink)}
+  .md h4{font-size:13.5px;margin:1em 0 .3em;color:var(--muted)}
+  .md p{margin:.6em 0}
+  .md ul,.md ol{margin:.5em 0 .5em 1.4em;padding:0}
+  .md li{margin:.25em 0}
+  .md code{font-family:"Cascadia Code",Consolas,monospace;font-size:.86em;background:var(--panel2);
+    padding:1px 5px;border-radius:4px;color:#e0c98a}
+  .md pre{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow:auto}
+  .md pre code{background:none;padding:0;color:var(--ink)}
+  .md blockquote{border-left:3px solid var(--gold);margin:.6em 0;padding:.2em 0 .2em 14px;color:var(--muted)}
+  .md hr{border:none;border-top:1px solid var(--line);margin:1.4em 0}
+  .md a{color:var(--blue)}
+  .md strong{color:var(--ink)}
+  .md table{border-collapse:collapse;width:100%;margin:.8em 0;font-size:12.5px;display:block;overflow-x:auto}
+  .md th,.md td{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}
+  .md th{background:var(--panel2);color:var(--gold);font-weight:600;white-space:nowrap}
+  .md tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+  .md .err{color:var(--amber)}
+  .md .err code{color:#e0c98a}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="title">
+      <h1><span class="accent">⚔ Dynasty</span> Survivors — Dev Dashboard</h1>
+      <div class="sub">Roguelite Survivors · Three Kingdoms · Unity 6.3 LTS · solo, 3–6 wk MVP target</div>
+    </div>
+    <div class="meta">
+      <div class="m"><div class="k">Phase</div><div class="v"><span class="phase-pill" id="mPhase"></span></div></div>
+      <div class="m"><div class="k">Design layer</div><div class="v" id="mConsistency"></div></div>
+      <div class="m"><div class="k">Updated</div><div class="v" id="mDate"></div></div>
+    </div>
+  </header>
+
+  <h2 class="sec">Snapshot</h2>
+  <div class="kpis" id="kpis"></div>
+
+  <h2 class="sec">Development Pipeline</h2>
+  <div class="legend">
+    <span><i style="background:var(--done)"></i>Complete</span>
+    <span><i style="background:var(--active)"></i>In progress</span>
+    <span><i style="background:var(--todo)"></i>Not started</span>
+  </div>
+  <div class="pipeline" id="pipeline"></div>
+
+  <h2 class="sec">System Design — 17 MVP Systems</h2>
+  <div class="legend">
+    <span><i style="background:var(--jade)"></i>Approved</span>
+    <span><i style="background:var(--blue)"></i>Designed (pending review)</span>
+    <span><i style="background:var(--amber)"></i>In review</span>
+    <span><i style="background:var(--todo)"></i>Not started</span>
+  </div>
+  <div id="systems"></div>
+  <div class="legend" style="margin-top:10px"><span>💡 Click any system card to read its full design document in-page.</span></div>
+
+  <h2 class="sec">Key Documents</h2>
+  <div class="docs" id="docs"></div>
+
+  <div class="cols">
+    <div class="drow-wrap">
+      <h2 class="sec">Progress by Discipline</h2>
+      <div class="disc" id="disciplines"></div>
+    </div>
+    <div class="drow-wrap">
+      <h2 class="sec">Next Actions</h2>
+      <div class="actions" id="actions"></div>
+    </div>
+  </div>
+
+  <h2 class="sec">Risk &amp; Open-Question Register</h2>
+  <div class="risks" id="risks"></div>
+
+  <h2 class="sec">Recent Activity</h2>
+  <div class="log" id="log"></div>
+
+  <footer>
+    Generated from project state — <span id="fSource"></span>.
+    To refresh, edit the <code>DATA</code> object at the top of this file (or ask Claude to regenerate it).<br>
+    Doc viewer: renders Markdown in-page. If a doc won't load by double-click (browser <code>file://</code> security),
+    serve the repo folder once — <code>python -m http.server</code> in the project root, then open
+    <code>http://localhost:8000/production/dashboard.html</code>.
+  </footer>
+</div>
+
+<!-- Document viewer modal -->
+<div class="modal" id="docModal" role="dialog" aria-modal="true">
+  <div class="modal-panel">
+    <div class="modal-head">
+      <span class="mpath" id="docPath"></span>
+      <span class="raw" id="docRaw"></span>
+      <button class="x" id="docClose" title="Close (Esc)">×</button>
+    </div>
+    <div class="modal-body"><div class="md" id="docBody"></div></div>
+  </div>
+</div>
+
+<script>
+/* ─────────────────────────────────────────────────────────────────────────
+   DATA — single source of truth for this dashboard. Edit here to update.
+   Last hand-synced: 2026-10-10
+   ───────────────────────────────────────────────────────────────────────── */
+const DATA = {
+  meta:{
+    phase:"Pre-Production · gate CONCERNS → advanced 10-10",
+    consistency:"Architecture independently reviewed 10-10 (3 blockers fixed)",
+    updated:"2026-10-10",
+    source:"design/, docs/architecture/ (11 ADRs + manifest v2026-10-10), production/epics/, production/gate-checks/"
+  },
+
+  kpis:[
+    {big:"17 / 17", lbl:"System GDDs authored", pct:100, color:"var(--jade)", note:"All MVP systems designed; 2 clock-wording fixes 10-10"},
+    {big:"11 / 12", lbl:"ADRs accepted", pct:92, color:"var(--jade)", note:"0001–0010 amended 10-10 + 0012 new; 0011 audio staged"},
+    {big:"69 / 72", lbl:"Requirements traced", pct:96, color:"var(--jade)", note:"0 Foundation/Core gaps; 3 partial (staged audio + 2 payload details)"},
+    {big:"39", lbl:"Foundation stories", pct:null, color:"var(--blue)", note:"5 epics · 37 Ready · 2 Blocked (flag #4; Combo/Parry signals)"},
+    {big:"7", lbl:"Decisions waiting on you", pct:null, color:"var(--red)", note:"min-spec · timeline/M1 · flag #4 · RATIFY list · commit · Unity project/licence · play prototype"},
+    {big:"4", lbl:"Open balance concerns", pct:null, color:"var(--amber)", note:"→ prototype; CD: start with Finisher ≥ Levy HP"}
+  ],
+
+  pipeline:[
+    {nm:"Concept & Vision", status:"done", dt:"game-concept.md approved (stale text to sync: '2D', dodge missing from hook)"},
+    {nm:"Engine Setup", status:"done", dt:"Unity 6.3 LTS pinned; reference docs corrected 10-10"},
+    {nm:"Systems Mapping", status:"done", dt:"17 systems, dependency order set"},
+    {nm:"System Design (GDDs)", status:"done", dt:"17/17 authored & approved", doc:"design/gdd/systems-index.md"},
+    {nm:"Cross-GDD Review", status:"done", dt:"CONCERNS → resolved; 4 balance items → prototype", doc:"design/gdd/gdd-cross-review-2026-06-19.md"},
+    {nm:"Art Bible", status:"done", dt:"All 9 sections — PROVISIONAL, 7 RATIFY items await you", doc:"design/art/art-bible.md"},
+    {nm:"Master Architecture", status:"done", dt:"v1.1 (10-10 amendments)", doc:"docs/architecture/architecture.md"},
+    {nm:"ADRs (11 / 12)", status:"done", dt:"0001–0010 amended + 0012 scene/boot; 0011 audio staged", doc:"docs/architecture/adr-0012-scene-boot-flow.md"},
+    {nm:"Architecture Review", status:"done", dt:"CONCERNS — 3 blocking conflicts found & fixed (clock domain, collider model, input instance)", doc:"docs/architecture/architecture-review-2026-10-10.md"},
+    {nm:"Control Manifest", status:"done", dt:"Regenerated v2026-10-10", doc:"docs/architecture/control-manifest.md"},
+    {nm:"First UX Spec", status:"done", dt:"combat-hud.md — PROVISIONAL, needs /ux-review", doc:"design/ux/combat-hud.md"},
+    {nm:"Phase Gate", status:"done", dt:"CONCERNS → advanced to Pre-Production (4 directors: non-blocking)", doc:"production/gate-checks/gate-check-2026-10-10-pre-production.md"},
+    {nm:"Foundation Epics + Stories", status:"done", dt:"5 epics · 39 stories (37 Ready, 2 Blocked)", doc:"production/epics/index.md"},
+    {nm:"Sprint Planning", status:"active", dt:"Waiting on YOU: timeline/M1 cut line + min-spec"},
+    {nm:"Prototype", status:"todo", dt:"combo + parry — needs YOU at the keyboard (Sprint 1 critical path)"},
+    {nm:"Implementation", status:"todo", dt:"Starts with bootstrap-combat-frame 001 (Unity project)"},
+    {nm:"QA", status:"todo", dt:"Test plan, smoke, sign-off"},
+    {nm:"Polish / Release", status:"todo", dt:"Steam / itch.io candidate"}
+  ],
+
+  layers:[
+    {name:"Foundation Layer", systems:[
+      {nm:"Enemy Definition", cat:"Gameplay", status:"approved", doc:"design/gdd/enemy-definition.md"},
+      {nm:"General Characters", cat:"Core", status:"approved", doc:"design/gdd/general-characters.md"},
+      {nm:"Damage & Health", cat:"Core", status:"approved", doc:"design/gdd/damage-health.md"},
+      {nm:"Upgrade Definition", cat:"Progression", status:"approved", doc:"design/gdd/upgrade-definition.md"},
+      {nm:"Input Manager", cat:"Core · 11 stories", status:"approved", doc:"design/gdd/input-manager.md"},
+      {nm:"Combat Core", cat:"Core", status:"approved", doc:"design/gdd/combat-core.md"}
+    ]},
+    {name:"Core Layer", systems:[
+      {nm:"Combo System", cat:"Gameplay · high-risk", status:"approved", doc:"design/gdd/combo-system.md"},
+      {nm:"Parry System", cat:"Gameplay · high-risk", status:"approved", doc:"design/gdd/parry-system.md"},
+      {nm:"Enemy AI", cat:"Gameplay", status:"approved", doc:"design/gdd/enemy-ai.md"},
+      {nm:"Progression System", cat:"Progression", status:"approved", doc:"design/gdd/progression-system.md"},
+      {nm:"Dodge System", cat:"Core · blocks Warlord", status:"approved", doc:"design/gdd/dodge-system.md"}
+    ]},
+    {name:"Feature Layer", systems:[
+      {nm:"Wave Spawner", cat:"Gameplay · high-risk", status:"approved", doc:"design/gdd/wave-spawner.md"},
+      {nm:"Run Session Manager", cat:"Core · 8 stories", status:"approved", doc:"design/gdd/run-session-manager.md"}
+    ]},
+    {name:"Presentation & Polish", systems:[
+      {nm:"Combat Feedback UI", cat:"UI · HUD spec drafted", status:"approved", doc:"design/gdd/combat-feedback-ui.md"},
+      {nm:"Upgrade Selection UI", cat:"UI", status:"approved", doc:"design/gdd/upgrade-selection-ui.md"},
+      {nm:"Run UI", cat:"UI", status:"approved", doc:"design/gdd/run-ui.md"},
+      {nm:"VFX & Audio", cat:"Audio/VFX", status:"approved", doc:"design/gdd/vfx-audio.md"}
+    ]}
+  ],
+
+  disciplines:[
+    {dn:"Game Design (GDDs)", pct:100, color:"var(--jade)", dd:"17/17 approved; 7 minor revision flags pending (flag #4 before Combo stories)"},
+    {dn:"Production / Planning", pct:45, color:"var(--gold)", dd:"Pre-Production; 5 Foundation epics, 39 stories; sprint plan waits on timeline decision"},
+    {dn:"Architecture", pct:96, color:"var(--jade)", dd:"Independently reviewed; 11/12 ADRs; 69/72 TRs; manifest v2026-10-10"},
+    {dn:"Art & Visual", pct:40, color:"var(--gold)", dd:"Art bible complete but PROVISIONAL (7 RATIFY items); 0 asset specs"},
+    {dn:"Audio", pct:10, color:"var(--red)", dd:"GDD approved; ADR-0011 staged"},
+    {dn:"UX", pct:35, color:"var(--gold)", dd:"Pattern library + accessibility tier + combat-hud spec (needs /ux-review)"},
+    {dn:"Engineering / Code", pct:10, color:"var(--red)", dd:"39 implementable stories; no Unity project / src/ yet"},
+    {dn:"QA & Testing", pct:20, color:"var(--gold)", dd:"Every story has QA test cases; CI scaffold awaits Unity project + licence"}
+  ],
+
+  actions:[
+    {cmd:"Decide: min-spec + timeline", why:"Pin min-spec CPU/GPU/RAM (all prototype benchmarks need it). Producer estimate ~11–12 wks for full MVP vs 3–6 target → choose an M1 'Core Loop Playable' cut line (recommended), extend, or cut systems."},
+    {cmd:"Decide: GDD flag #4 + RATIFY list", why:"C1/C2 upgrade static-vs-delta model (blocks UpgradeCatalogue + Combo stories). The art bible RATIFY list can wait until after the greybox prototype."},
+    {cmd:"Commit the work", why:"~5 months of design + architecture is uncommitted on xin.dynasty-surviours. Producer's #1 recommendation."},
+    {cmd:"/sprint-plan new", why:"After the timeline decision. Sprint 1 = Unity project setup → pool → clock → input → throwaway combo/parry prototype."},
+    {cmd:"/prototype combo-and-parry-system", why:"YOU at the keyboard. Answers 4 balance + 4 feel questions, dodge-vs-parry, Animator A/B, 50/100/200 benchmarks."}
+  ],
+
+  risks:[
+    {sev:"high", tag:"Schedule", text:"Producer: ~55–60 dev-days (11–12 wks) for the full 17-system MVP vs the 3–6 wk target. Needs an M1 cut line before sprint planning.", meta:"PR-PHASE-GATE 10-10 · owner: User"},
+    {sev:"high", tag:"Risk", text:"Combat-feel numbers are unvalidated; the core loop has never been played in ~5.5 months of design work.", meta:"CD-PHASE-GATE 10-10 · owner: Prototype"},
+    {sev:"med", tag:"Design", text:"Dodge (400ms i-frames, 1s cooldown) may quietly replace parry — the game's hook. Measure dodge vs parry on parriable attacks in the prototype.", meta:"CD-PHASE-GATE · owner: Prototype"},
+    {sev:"med", tag:"Balance", text:"Base Finisher 25 < Levy HP 30 — CD calls this a core-fantasy flaw; start the prototype with values where a base Finisher kills a Levy. Parry 80 vs Finisher ceiling remains a hypothesis.", meta:"cross-review #7/#8 · owner: Prototype"},
+    {sev:"med", tag:"Process", text:"Everything is uncommitted; 13 self-reviewed GDDs + 11 auto-accepted ADRs + provisional art bible/UX spec await ratification.", meta:"PR-PHASE-GATE · owner: User"},
+    {sev:"med", tag:"Tech", text:"Min-spec not pinned and camera not locked — all perf gates (4ms tick, 3ms animator, 1,100 draws) lack a reference.", meta:"TD/AD-PHASE-GATE · owner: User + first prototype sprint"},
+    {sev:"low", tag:"Resolved", text:"Clock-domain bug (parries would fail forever after the first level-up), stale-collider queries, and UI input double-handling — all fixed in ADR amendments 10-10.", meta:"architecture-review-2026-10-10"}
+  ],
+
+  log:[
+    {ld:"2026-10-10", lt:"/create-epics layer: foundation (5 epics) + /create-stories ×5: 39 stories (37 Ready, 2 Blocked), all with QA test cases."},
+    {ld:"2026-10-10", lt:"/gate-check pre-production: CONCERNS (all 4 directors non-blocking) → stage advanced to Pre-Production. TD must-fixes applied: control manifest v2026-10-10, architecture.md v1.1, technical-preferences, engine-reference corrections."},
+    {ld:"2026-10-10", lt:"ADR-0012 scene/boot flow authored → 0 Foundation traceability gaps. /ux-design combat-hud (provisional)."},
+    {ld:"2026-10-10", lt:"/art-bible: all 9 sections (art-director + technical-artist + ux-designer agents) — provisional, 7 RATIFY items."},
+    {ld:"2026-10-10", lt:"/architecture-review (independent): 72 TRs; 3 BLOCKING conflicts found & fixed — clock domain C1, no-Rigidbody colliders N1, input action-asset instance N2. tr-registry v2."},
+    {ld:"2026-07-04", lt:"/gate-check pre-production: FAIL — 3 blockers. ADR-0001..0010 authored; control manifest; tests/ + CI scaffold."},
+    {ld:"2026-07-04", lt:"/create-architecture: master architecture v1.0 — 58-TR baseline."},
+    {ld:"2026-06-19", lt:"Remaining 12 MVP GDDs authored; /review-all-gdds (17) CONCERNS → resolved."},
+    {ld:"2026-06-18", lt:"Re-review batch → enemy-definition, damage-health, upgrade-definition APPROVED."},
+    {ld:"2026-05-10", lt:"game-concept approved; systems-index created (17 systems)."}
+  ],
+
+  docs:[
+    {ic:"🚦", nm:"Gate Check (10-10)", path:"production/gate-checks/gate-check-2026-10-10-pre-production.md"},
+    {ic:"🔎", nm:"Architecture Review (10-10)", path:"docs/architecture/architecture-review-2026-10-10.md"},
+    {ic:"🧭", nm:"Traceability Index", path:"docs/architecture/architecture-traceability.md"},
+    {ic:"📚", nm:"Epics Index", path:"production/epics/index.md"},
+    {ic:"🎨", nm:"Art Bible", path:"design/art/art-bible.md"},
+    {ic:"🖥️", nm:"Combat HUD UX Spec", path:"design/ux/combat-hud.md"},
+    {ic:"🏛️", nm:"Master Architecture", path:"docs/architecture/architecture.md"},
+    {ic:"📏", nm:"Control Manifest", path:"docs/architecture/control-manifest.md"},
+    {ic:"🆔", nm:"TR Registry", path:"docs/architecture/tr-registry.yaml"},
+    {ic:"📜", nm:"Game Concept", path:"design/gdd/game-concept.md"},
+    {ic:"🗂️", nm:"Systems Index", path:"design/gdd/systems-index.md"},
+    {ic:"📝", nm:"Session State", path:"production/session-state/active.md"}
+  ]
+};
+
+/* ─────────────────────────────── RENDER ─────────────────────────────── */
+const $=(id)=>document.getElementById(id);
+const statusLabel={approved:"Approved",designed:"Designed",review:"In review",todo:"Not started"};
+const badgeClass={approved:"b-approved",designed:"b-designed",review:"b-review",todo:"b-todo"};
+
+$("mPhase").textContent=DATA.meta.phase;
+$("mConsistency").textContent=DATA.meta.consistency;
+$("mDate").textContent=DATA.meta.updated;
+$("fSource").textContent=DATA.meta.source;
+
+$("kpis").innerHTML=DATA.kpis.map(k=>`
+  <div class="kpi">
+    <div class="big" style="color:${k.color}">${k.big}</div>
+    <div class="lbl">${k.lbl}</div>
+    ${k.pct!==null?`<div class="bar"><i style="width:${k.pct}%;background:${k.color}"></i></div>`:`<div style="height:5px;margin-top:12px"></div>`}
+    <small>${k.note}</small>
+  </div>`).join("");
+
+$("pipeline").innerHTML=DATA.pipeline.map(s=>`
+  <div class="stage ${s.status}${s.doc?' clickable':''}"${s.doc?` onclick="openDoc('${s.doc}')"`:''}>
+    <span class="tag">${s.status==="active"?"In progress":s.status}</span>
+    <div><span class="dot ${s.status}"></span><span class="nm">${s.nm}</span></div>
+    <div class="dt">${s.dt}</div>
+  </div>`).join("");
+
+$("systems").innerHTML=DATA.layers.map(L=>`
+  <div class="layer-h">${L.name}</div>
+  <div class="systems">
+    ${L.systems.map(s=>`
+      <div class="sys s-${s.status}${s.doc?' clickable':''}"${s.doc?` onclick="openDoc('${s.doc}')"`:''}>
+        <div class="row1">
+          <span class="nm">${s.nm}</span>
+          <span class="badge ${badgeClass[s.status]}">${statusLabel[s.status]}</span>
+        </div>
+        <div class="cat">${s.cat}</div>
+        ${s.doc?`<div class="readhint">▸ Read design doc</div>`:`<div class="readhint" style="opacity:.5">Not yet designed</div>`}
+      </div>`).join("")}
+  </div>`).join("");
+
+$("docs").innerHTML=DATA.docs.map(d=>`
+  <div class="doc-item" onclick="openDoc('${d.path}')">
+    <span class="ic">${d.ic}</span>
+    <div><div class="dn2">${d.nm}</div><div class="dp2">${d.path}</div></div>
+  </div>`).join("");
+
+$("disciplines").innerHTML=DATA.disciplines.map(d=>`
+  <div class="drow" style="flex-wrap:wrap">
+    <span class="dn">${d.dn}</span>
+    <span class="dbar"><i style="width:${d.pct}%;background:${d.color}"></i></span>
+    <span class="dp">${d.pct}%</span>
+    <span class="dd">${d.dd}</span>
+  </div>`).join("");
+
+$("actions").innerHTML=DATA.actions.map((a,i)=>`
+  <div class="act">
+    <div class="num">${i+1}</div>
+    <div><span class="cmd">${a.cmd}</span><div class="why">${a.why}</div></div>
+  </div>`).join("");
+
+$("risks").innerHTML=DATA.risks.map(r=>`
+  <div class="risk">
+    <div class="sev sev-${r.sev}"></div>
+    <div class="rtext"><span class="rtag">${r.tag}</span><div>${r.text}</div><div class="rmeta">${r.meta}</div></div>
+  </div>`).join("");
+
+$("log").innerHTML=DATA.log.map(l=>`
+  <div class="lrow"><span class="ld">${l.ld}</span><span class="lt">${l.lt}</span></div>`).join("");
+
+/* ─────────────────────── Document viewer ─────────────────────── */
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function inlineMd(s){
+  return s
+    .replace(/`([^`]+)`/g,"<code>$1</code>")
+    .replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>")
+    .replace(/~~([^~]+)~~/g,"<del>$1</del>")
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+}
+function renderMarkdown(src){
+  const L=esc(src).split(/\r?\n/); let h="",i=0;
+  const isTableSep=s=>/^\s*\|?[\s:\-|]+$/.test(s)&&s.includes("-")&&s.includes("|");
+  while(i<L.length){
+    let ln=L[i];
+    if(/^```/.test(ln)){let b=[];i++;while(i<L.length&&!/^```/.test(L[i])){b.push(L[i]);i++;}i++;h+="<pre><code>"+b.join("\n")+"</code></pre>";continue;}
+    if(/^\s*\|.*\|\s*$/.test(ln)&&i+1<L.length&&isTableSep(L[i+1])){
+      const row=r=>r.trim().replace(/^\|/,"").replace(/\|$/,"").split("|").map(c=>c.trim());
+      const hd=row(ln);i+=2;let rs=[];
+      while(i<L.length&&/^\s*\|.*\|\s*$/.test(L[i])){rs.push(row(L[i]));i++;}
+      h+="<table><thead><tr>"+hd.map(c=>"<th>"+inlineMd(c)+"</th>").join("")+"</tr></thead><tbody>"+
+        rs.map(r=>"<tr>"+r.map(c=>"<td>"+inlineMd(c)+"</td>").join("")+"</tr>").join("")+"</tbody></table>";continue;}
+    let m;
+    if(m=ln.match(/^(#{1,6})\s+(.*)$/)){const n=m[1].length;h+=`<h${n}>`+inlineMd(m[2])+`</h${n}>`;i++;continue;}
+    if(/^\s*([-*_])\1\1+\s*$/.test(ln)){h+="<hr>";i++;continue;}
+    if(/^\s*&gt;\s?/.test(ln)){let b=[];while(i<L.length&&/^\s*&gt;\s?/.test(L[i])){b.push(L[i].replace(/^\s*&gt;\s?/,""));i++;}h+="<blockquote>"+inlineMd(b.join(" "))+"</blockquote>";continue;}
+    if(/^\s*[-*]\s+/.test(ln)){let b=[];while(i<L.length&&/^\s*[-*]\s+/.test(L[i])){b.push(L[i].replace(/^\s*[-*]\s+/,""));i++;}h+="<ul>"+b.map(x=>"<li>"+inlineMd(x)+"</li>").join("")+"</ul>";continue;}
+    if(/^\s*\d+\.\s+/.test(ln)){let b=[];while(i<L.length&&/^\s*\d+\.\s+/.test(L[i])){b.push(L[i].replace(/^\s*\d+\.\s+/,""));i++;}h+="<ol>"+b.map(x=>"<li>"+inlineMd(x)+"</li>").join("")+"</ol>";continue;}
+    if(/^\s*$/.test(ln)){i++;continue;}
+    let b=[ln];i++;
+    while(i<L.length&&!/^\s*$/.test(L[i])&&!/^(#{1,6})\s/.test(L[i])&&!/^\s*\|.*\|\s*$/.test(L[i])&&!/^```/.test(L[i])&&!/^\s*[-*]\s+/.test(L[i])&&!/^\s*\d+\.\s+/.test(L[i])&&!/^\s*&gt;/.test(L[i])){b.push(L[i]);i++;}
+    h+="<p>"+inlineMd(b.join(" "))+"</p>";
+  }
+  return h;
+}
+function openDoc(path,raw=false){
+  const modal=$("docModal"),body=$("docBody");
+  $("docPath").textContent=path;
+  const alwaysRaw=/\.ya?ml$/.test(path);
+  $("docRaw").innerHTML=alwaysRaw?"":
+    `<a href="javascript:void(0)" onclick="openDoc('${path}',${!raw})">${raw?"view rendered ↩":"view raw"}</a>`;
+  body.innerHTML='<p style="color:var(--muted)">Loading…</p>';
+  modal.classList.add("open");
+  fetchDoc(path)
+    .then(txt=>{body.innerHTML=(raw||alwaysRaw)?"<pre><code>"+esc(txt)+"</code></pre>":renderMarkdown(txt);body.parentElement.scrollTop=0;})
+    .catch(err=>{body.innerHTML=`<div class="err">
+      <p><strong>Couldn't load this document in-page.</strong></p>
+      <p>This viewer needs the repo served over HTTP — a page opened straight from disk (<code>file://</code>) or inside a
+      sandboxed panel can't read sibling files.</p>
+      <p><strong>Fix:</strong> serve the repo once — run <code>python -m http.server 8321</code> in the project root, then open
+      <code>http://localhost:8321/production/dashboard.html</code>. The in-page viewer then works for every document.</p>
+      <p style="color:var(--faint)">(${esc(String(err))})</p></div>`;});
+}
+/* Try several ways to reach the repo root: relative to this page, site root,
+   and a conventional localhost server — first one that answers wins. */
+async function fetchDoc(path){
+  const candidates=[];
+  try{candidates.push(new URL("../"+path,location.href).href)}catch(e){}
+  try{candidates.push(new URL("/"+path,location.href).href)}catch(e){}
+  candidates.push("http://localhost:8321/"+path);
+  let lastErr;
+  for(const url of candidates){
+    try{
+      const r=await fetch(url);
+      if(r.ok)return await r.text();
+      lastErr=new Error("HTTP "+r.status+" @ "+url);
+    }catch(e){lastErr=e;}
+  }
+  throw lastErr||new Error("no reachable source");
+}
+function closeDoc(){$("docModal").classList.remove("open");}
+$("docClose").onclick=closeDoc;
+$("docModal").addEventListener("click",e=>{if(e.target===$("docModal"))closeDoc();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeDoc();});
+</script>
+</body>
+</html>
