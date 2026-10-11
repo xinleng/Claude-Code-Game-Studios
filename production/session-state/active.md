@@ -300,3 +300,8 @@ The following steps were identified in the concept doc checklist. **Pick one to 
 - CI: run 38098780516 (BCF-002 push fb350ac) green — EditMode 38/38, PlayMode 1/1
 - Tech debt logged: None
 - Next recommended: BCF-003 CombatFrame orchestrator (production/epics/bootstrap-combat-frame/story-003-combat-frame-orchestrator.md); GD-001 / OP-001 / IM-001 also ready
+
+## Session Extract — /story-done BCF-003 2026-10-11
+- Story: production/epics/bootstrap-combat-frame/story-003-combat-frame-orchestrator.md
+- Evidence: `tests/unit/combat-frame/combat_frame_order_test.cs` + `combat_frame_event_recorder_test.cs` (14 tests), EditMode 71/71
+- Verdict: COMPLETE WITH NOTES (autonomous Sprint 1 batch; consolidated independent code review at batch end)

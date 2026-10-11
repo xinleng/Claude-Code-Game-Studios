@@ -40,11 +40,11 @@ stories:
     name: "CombatFrame orchestrator, ITickable order, RunFrame pump & EventRecorder"
     file: "production/epics/bootstrap-combat-frame/story-003-combat-frame-orchestrator.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-11"
   - id: "GD-001"
     name: "EnemyDataSO — per-type/tier enemy data assets (incl. Warlord P1 + P2)"
     file: "production/epics/game-data/story-001-enemy-data-so.md"

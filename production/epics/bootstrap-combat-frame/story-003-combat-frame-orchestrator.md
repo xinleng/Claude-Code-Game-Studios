@@ -1,7 +1,7 @@
 # Story 003: CombatFrame Orchestrator, ITickable Order, RunFrame Pump & EventRecorder
 
 > **Epic**: Bootstrap, CombatFrame & Run Clock
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-10-10
@@ -134,7 +134,7 @@
 - Logic: `tests/unit/combat-frame/combat_frame_order_test.cs` (AC-1…AC-7) and `tests/unit/combat-frame/combat_frame_event_recorder_test.cs` (AC-8) — must exist and pass in EditMode
 - Helper: `tests/helpers/EventRecorder.cs`
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/combat-frame/combat_frame_order_test.cs` + `combat_frame_event_recorder_test.cs` (14 tests), EditMode 71/71
 
 ---
 
@@ -142,3 +142,12 @@
 
 - Depends on: Story 001 (project/asmdefs) and Story 002 (`IGameClock`, `FakeGameClock`) must be DONE
 - Unlocks: Story 005 (Bootstrap wires CombatFrame), Story 006 (anchor constants used by the Update() gate); input-manager epic (AC-IM-12), and every Core/Feature combat story (they test through `RunFrame`)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-11
+**Criteria**: 8/8 passing (AC-6 "no lookups" also code-reviewed; automated Find* gate is BCF-006).
+**Deviations**: Advisory — frame-step seams live in `src/Core/Frame/` as `ITickable`, `IParryFrameStep`, `IPlayerHealthFrameStep`, `IProgressionFrameStep` (one file each); `CombatFrame` adds a read-only `IsInitialized`. Second `Initialize` is **rejected** (`InvalidOperationException`); null slots throw `ArgumentNullException` (Bootstrap wires no-op steps instead).
+**Test Evidence**: Logic — `tests/unit/combat-frame/combat_frame_order_test.cs` (11 tests), `tests/unit/combat-frame/combat_frame_event_recorder_test.cs` (3 tests); helper `tests/helpers/EventRecorder.cs`. EditMode 71/71.
+**Code Review**: Self-review during the autonomous Sprint 1 batch; consolidated independent review scheduled at batch end. LP/QL gates skipped (lean).
