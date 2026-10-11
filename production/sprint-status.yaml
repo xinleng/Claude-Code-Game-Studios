@@ -6,27 +6,27 @@ goal: "Stand up the Unity project and deterministic runtime spine (clock, frame 
 start: "2026-10-12"
 end: "2026-10-23"
 generated: "2026-10-10"
-updated: "2026-10-10"
+updated: "2026-10-11"
 
 stories:
   - id: "BCF-001"
     name: "Day-0 Unity 6.3 LTS project setup & assembly layout"
     file: "production/epics/bootstrap-combat-frame/story-001-unity-project-setup.md"
     priority: must-have
-    status: in-progress
+    status: done
     owner: "user + unity-specialist"
     estimate_days: 1.0
-    blocker: "AC-10 only: push branch + PR to main so CI runs (push needs user approval)"
-    completed: ""
+    blocker: ""
+    completed: "2026-10-11"
   - id: "BCF-002"
     name: "IGameClock with unified pause-compensated RunTime + test clock"
     file: "production/epics/bootstrap-combat-frame/story-002-game-clock-run-time.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-10"
   - id: "BCF-004"
     name: "Shared [DESIGNER-ERROR] logging channel"
     file: "production/epics/bootstrap-combat-frame/story-004-designer-error-channel.md"
@@ -106,7 +106,7 @@ stories:
     status: ready-for-dev
     owner: "prototyper"
     estimate_days: 2.0
-    blocker: "Needs Unity 6.3 installed"
+    blocker: ""
     completed: ""
   - id: "PROTO-2"
     name: "Play the prototype + playtest report"

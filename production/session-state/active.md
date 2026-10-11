@@ -263,3 +263,24 @@ The following steps were identified in the concept doc checklist. **Pick one to 
 - `docs/engine-reference/unity/breaking-changes.md` (modified)
 - `design/gdd/` (untracked — new)
 - `production/review-mode.txt` (untracked — value: `lean`)
+
+## Session Extract — /dev-story 2026-10-10
+- Story: production/epics/bootstrap-combat-frame/story-002-game-clock-run-time.md — IGameClock with unified pause-compensated RunTime + test clock
+- Files changed: src/Core/Time/IGameClock.cs, IRunClockControl.cs, RunClockState.cs (shared pure math), UnityGameClock.cs; tests/helpers/FakeGameClock.cs
+- Test written: tests/unit/game-clock/game_clock_run_time_test.cs (31 tests; EditMode suite 32/32 green via `unity test`)
+- Deviation: implemented while BCF-001 dependency awaits CI (AC-10) — user-directed
+- Open: G-2 (InputManager access to ToRunTime on the RSM-only control interface); realtimeSinceStartup vs Input System ctx.time epoch check (input-manager epic); UnityGameClock covered via RunClockState only (play-mode check later)
+- Blockers: None for BCF-002. BCF-001 AC-10: CI run 38088358551 failed — Unity error 20111 "serial has reached the maximum number of activations" (user must free an activation)
+- Next: /code-review src/Core/Time/*.cs tests/helpers/FakeGameClock.cs then /story-done story-002
+
+## Session Extract — /story-done 2026-10-10
+- Verdict: COMPLETE WITH NOTES
+- Story: production/epics/bootstrap-combat-frame/story-002-game-clock-run-time.md — IGameClock with unified pause-compensated RunTime + test clock
+- Tech debt logged: None (3 follow-ups recorded in the story's Completion Notes, owned by RSM / input-manager / BCF-005-006)
+- Next recommended: BCF-004 designer-error channel (0.25d) → BCF-003 CombatFrame orchestrator; GD-001 EnemyDataSO + IM-001 PlayerControls also unblocked
+
+## Session Extract — /story-done BCF-001 2026-10-11
+- Verdict: COMPLETE WITH NOTES (10/10; CI run 38097320963 green — EditMode 1/1, PlayMode 1/1)
+- CI licence switched to Unity Personal (Pro seat is employer-owned, both activations used by home+office PCs); UNITY_SERIAL secret deleted; test job has checks:write
+- Evidence: production/qa/smoke-2026-10-11.md
+- Next: commit + push BCF-002 (so CI runs all 38 tests) → /dev-story BCF-004

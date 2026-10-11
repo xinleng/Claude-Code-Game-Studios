@@ -1,7 +1,7 @@
 # Story 002: IGameClock with Unified Pause-Compensated RunTime + Test Clock
 
 > **Epic**: Bootstrap, CombatFrame & Run Clock
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-10-10
@@ -134,7 +134,7 @@
 - Logic: `tests/unit/game-clock/game_clock_run_time_test.cs` — must exist and pass (EditMode, `FakeGameClock` only, no real time)
 - Helper: `tests/helpers/FakeGameClock.cs`
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing — `tests/unit/game-clock/game_clock_run_time_test.cs` (37 tests) + `tests/helpers/FakeGameClock.cs`
 
 ---
 
@@ -142,3 +142,18 @@
 
 - Depends on: Story 001 (project + `Dynasty.Core` / test asmdefs) must be DONE
 - Unlocks: Story 003 (CombatFrame reads `DeltaTime`), Story 005 (Bootstrap injects the clock); run-session-manager epic (origin/pause call sites), input-manager epic (stamp conversion), every timing-sensitive Logic story
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-10
+**Criteria**: 9/9 passing — AC-1…AC-8 by automated EditMode tests (suite 38/38 green via `unity test`); AC-9 by code review (only `src/Core/Time/UnityGameClock.cs` reads `UnityEngine.Time`; automated gate = BCF-006)
+**Test Evidence**: Logic — `tests/unit/game-clock/game_clock_run_time_test.cs` (37 tests), helper `tests/helpers/FakeGameClock.cs`
+**Code Review**: Complete — APPROVED WITH SUGGESTIONS (unity-specialist: 0 blocking; qa-tester: TESTABLE with minor gaps). Applied before closure: `MarkRunOrigin` re-samples realtime (hitched-frame origin bug); NaN/±Infinity stamp test with origin marked; exact post-overflow retained/archived values; re-mark-after-overflow; 1e6-realtime double-precision test; now-before-origin; `FakeGameClock.Advance` rejects negative/non-finite dt; doc notes on realtime basis (focus loss) and same-frame stamp collapse.
+**Deviations** (advisory):
+- Extra file `src/Core/Time/RunClockState.cs` — shared pure math so the production formula is unit-tested directly (sanctioned by the implementation brief)
+- Implemented while dependency BCF-001 awaits AC-10 (CI green) — user-directed
+**Follow-ups (owned elsewhere)**:
+- run-session-manager epic: pause the run clock on focus loss (`OnApplicationFocus`) or set `runInBackground` — RunTime is realtime-based and would otherwise burn the run countdown while alt-tabbed
+- input-manager epic: G-2 — recommended narrow `IRunTimeConverter { float ToRunTime(double) }` handed to InputManager by Bootstrap; run the ctx.time vs `realtimeSinceStartupAsDouble` epoch diagnostic (unity-specialist confirmed shared basis from Input System 1.18.0 source, ~90% confidence)
+- BCF-005/006: PlayMode smoke for `UnityGameClock` frame-cache coherence (no automated coverage of the cache today)

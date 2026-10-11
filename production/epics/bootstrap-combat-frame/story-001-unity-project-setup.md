@@ -1,7 +1,7 @@
 # Story 001: Day-0 Unity 6.3 LTS Project Setup & Assembly Layout
 
 > **Epic**: Bootstrap, CombatFrame & Run Clock
-> **Status**: In Progress — AC-1…AC-9 verified locally 2026-10-10; AC-10 (CI green) pending push
+> **Status**: Complete — AC-1…AC-10 verified (AC-10 CI green 2026-10-11, run 38097320963)
 > **Layer**: Foundation
 > **Type**: Config/Data
 > **Manifest Version**: 2026-10-10
@@ -136,7 +136,7 @@
 - Config/Data: smoke check pass (`production/qa/smoke-[date].md`) recording AC-1…AC-10 with the exact editor and Input System versions; link to the green CI run
 - Supporting: `tests/unit/project-setup/project_setup_assembly_test.cs` (sanity test) passing
 
-**Status**: [ ] Not yet created
+**Status**: [x] `production/qa/smoke-2026-10-11.md` (PASS, AC-1…AC-10)
 
 ---
 
@@ -147,7 +147,7 @@
 
 ---
 
-## Completion Notes (2026-10-10, in progress)
+## Completion Notes (completed 2026-10-11)
 
 - Editor **6000.3.6f1** (revision bbb010bdb8a3); created with the Unity CLI (`unity projects create`, template `com.unity.template.urp-blank`), configured via a one-off batchmode setup script (deleted), moved to the repo root. Commits `75d508b`, `db4116e`.
 - AC-1 ✅ opens/compiles with zero errors (two expected warnings: `Dynasty.Input` / `Dynasty.Bootstrap` have no scripts yet). ProjectVersion.txt at `ProjectSettings/`.
@@ -159,5 +159,6 @@
 - AC-7 ✅ `Assets/Scenes/MainArena.unity` is the only build scene.
 - AC-8 ✅ only `Dynasty.Input.asmdef` references `Unity.InputSystem`; no `Assembly-CSharp.dll` produced.
 - AC-9 ✅ `unity test` CLI: EditMode 1/1, PlayMode 1/1 passed (`project_setup_assembly_test.cs`, `project_setup_play_mode_test.cs`).
-- AC-10 ⏳ needs the branch pushed + a PR to `main` (workflow triggers on push/PR to main only). game-ci image `unityci/editor:ubuntu-6000.3.6f1-base-3` exists.
+- AC-10 ✅ CI run [38097320963](https://github.com/xinleng/Claude-Code-Game-Studios/actions/runs/38097320963) on PR #1: detect `has-project=true`, EditMode 1/1, PlayMode 1/1. **Licence decision changed 2026-10-10**: the Pro seat is employer-owned and its 2 activations are held by the home + office PCs (error 20111), so CI uses a **Unity Personal** licence (`UNITY_LICENSE` + `UNITY_EMAIL` + `UNITY_PASSWORD`); `UNITY_SERIAL` secret deleted (commit `05a1bbc`). Test job granted `checks: write` (commit `6fc6adc`).
 - Layout: `src/` = local package `com.dynasty.game`, `tests/` = `com.dynasty.tests` (in `testables`); `tests/unit|integration|helpers` join EditModeTests via `.asmref`; `tests/_pending/` excluded by a never-defined define constraint.
+- **Criteria**: 10/10 · **Deviations**: licence type (Personal, not Pro) — supersedes user decision (3) above · **Test Evidence**: smoke-2026-10-11.md · **Code Review**: skipped (Config/Data, lean mode)
