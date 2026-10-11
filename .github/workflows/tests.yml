@@ -38,6 +38,10 @@ jobs:
     needs: detect
     if: needs.detect.outputs.has-project == 'true'
     runs-on: ubuntu-latest
+    # The test runner publishes a "Test Results" check run; the repo's default GITHUB_TOKEN is read-only.
+    permissions:
+      contents: read
+      checks: write
 
     steps:
       - name: Checkout
