@@ -1,7 +1,7 @@
 # Story 003: TryConsumeParryPress — consume-once, notBefore guard, most-recent wins
 
 > **Epic**: Input Manager
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-10-10
@@ -112,7 +112,7 @@
 **Required evidence**:
 - Logic: `tests/unit/input-manager/input_manager_parry_consume_test.cs` — must exist and pass (EditMode, deterministic)
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/input-manager/input_manager_parry_consume_test.cs` (10 tests × 2 implementations), EditMode 151/151
 
 ---
 
@@ -120,3 +120,15 @@
 
 - Depends on: Story 002
 - Unlocks: Story 004; Parry System epic (consume API + fake); Combat Feedback UI epic (peek)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-11
+**Criteria**: 6/6 passing.
+**Deviations**: Advisory —
+- Consume logic lives on `ParryPressBuffer.TryConsume(currentTime, notBefore, out pressTime)`; `InputManager.TryConsumeParryPress` / `HasLiveParryPress` forward with `IGameClock.RunTime` (exact architecture.md signatures, no time parameter).
+- `FakeInputAuthority` (`tests/helpers/`) reuses the same `ParryPressBuffer`, with settable `Now`; the contract test runs every case against both the real InputManager (presses injected via `InputManagerTestSeam.RecordParryPress` — the `Parry.performed` capture path is IM-004) and the fake via `[TestFixture("InputManager")]` / `[TestFixture("Fake")]`.
+- No window/back-edge logic in Input Manager (asserted: the consume API takes only `notBefore`).
+**Test Evidence**: Logic — `tests/unit/input-manager/input_manager_parry_consume_test.cs` (10 tests × 2 implementations). EditMode 151/151.
+**Code Review**: Self-review during the autonomous Sprint 1 batch; consolidated independent review at batch end. LP/QL gates skipped (lean).

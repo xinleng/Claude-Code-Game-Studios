@@ -1,7 +1,7 @@
 # Story 002: Parry press ring buffer — liveness, pruning & capacity
 
 > **Epic**: Input Manager
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-10-10
@@ -112,7 +112,7 @@
 **Required evidence**:
 - Logic: `tests/unit/input-manager/input_manager_parry_buffer_test.cs` — must exist and pass (EditMode, injected times, no `WaitForSeconds`)
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/input-manager/input_manager_parry_buffer_test.cs` (12 cases), EditMode 151/151
 
 ---
 
@@ -120,3 +120,15 @@
 
 - Depends on: Story 001 (assembly, `IInputAuthority` surface)
 - Unlocks: Story 003, Story 004, Story 005, Story 007
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-11
+**Criteria**: 6/6 passing.
+**Deviations**: Advisory —
+- `ParryPressBuffer` (public, engine-free, `src/Input/`) holds the ring; InputManager owns one instance built from the new read-only view `IInputTuning` (`Dynasty.GameData`, `src/GameData/Tuning/`; `TuningConfig` implements it in GD-003). `Dynasty.Input` now references `Dynasty.GameData`. `InputManager.Initialize(clock, tuning)`.
+- **Inclusive boundary form:** `(float)(press_time + window) >= current_time`. The explicit float cast matters: without it the runtime evaluated the sum at higher precision and the exact-boundary press (1.000 → 1.120) read as expired — caught by the boundary test. Holds at 0.0/0.120 and 1199.000/1199.120.
+- Prune compacts in place preserving order (no assumption that stamps arrive sorted). Extra API: `Count`, `Capacity`, `TryGetEntry`, `Clear` (run reset).
+**Test Evidence**: Logic — `tests/unit/input-manager/input_manager_parry_buffer_test.cs` (12 cases incl. zero-GC assertion); fixture `tests/helpers/TestInputTuning.cs`. EditMode 151/151.
+**Code Review**: Self-review during the autonomous Sprint 1 batch; consolidated independent review at batch end. LP/QL gates skipped (lean).

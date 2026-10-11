@@ -43,6 +43,12 @@ namespace Dynasty.Input
             return manager.Controls.asset.FindActionMap(mapName, true).enabled;
         }
 
+        /// <summary>Records a parry press directly into the manager's buffer (capture path is Story 004).</summary>
+        internal static void RecordParryPress(InputManager manager, float pressTime)
+        {
+            manager.ParryBuffer.Record(pressTime);
+        }
+
         /// <summary>The controls instance as an opaque reference (identity checks only).</summary>
         internal static object ControlsIdentity(InputManager manager)
         {

@@ -3,7 +3,8 @@
     "rootNamespace": "Dynasty.Input",
     "references": [
         "Unity.InputSystem",
-        "Dynasty.Core"
+        "Dynasty.Core",
+        "Dynasty.GameData"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

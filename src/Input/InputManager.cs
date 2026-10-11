@@ -1,5 +1,6 @@
 using System;
 using Dynasty.Core;
+using Dynasty.GameData;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -16,15 +17,16 @@ namespace Dynasty.Input
     /// stay inert before run start (AC-IM-10).
     /// </para>
     /// <para>
-    /// Built incrementally: parry buffer + consume (Stories 002–003), capture + run-clock stamps (004),
-    /// freeze (005), move/steer (006), <c>[-200]</c> anchor + <c>Tick()</c> (007), UI module binder (008),
-    /// control card (011). Until then those members return neutral values. Main thread only.
+    /// Parry presses live in the engine-free <see cref="ParryPressBuffer"/> (Stories 002–003); peeks and
+    /// consumes use the injected clock's <c>RunTime</c>. Still to come: capture + run-clock stamps (004),
+    /// freeze (005), move/steer (006), <c>[-200]</c> anchor + <c>Tick()</c>/prune (007), UI module binder
+    /// (008), control card (011) — until then those members return neutral values. Main thread only.
     /// </para>
     /// </summary>
     /// <example>
     /// <code>
     /// var input = go.AddComponent&lt;InputManager&gt;();
-    /// input.Initialize(clock);                    // Bootstrap
+    /// input.Initialize(clock, tuning);            // Bootstrap
     /// input.SetContext(InputContext.Menu);        // RSM: selection screen
     /// </code>
     /// </example>
@@ -32,6 +34,7 @@ namespace Dynasty.Input
     public sealed class InputManager : MonoBehaviour, IInputAuthority, IDisposable
     {
         private IGameClock _clock;
+        private ParryPressBuffer _parryBuffer;
         private PlayerControls _controls;
         private bool _hasContext;
         private InputContext _context;
@@ -55,10 +58,11 @@ namespace Dynasty.Input
         /// Injection-time initialisation: asserts the Input System update mode, then constructs the single
         /// <see cref="PlayerControls"/> instance with every map disabled. May be called exactly once.
         /// </summary>
-        /// <param name="clock">Run clock (stamps parry presses from Story 004).</param>
-        /// <exception cref="ArgumentNullException"><paramref name="clock"/> is null.</exception>
+        /// <param name="clock">Run clock: parry liveness and stamps use <see cref="IGameClock.RunTime"/>.</param>
+        /// <param name="tuning">Input section of TuningConfig (parry window and buffer capacity).</param>
+        /// <exception cref="ArgumentNullException">An argument is null.</exception>
         /// <exception cref="InvalidOperationException">Already initialised (a second instance is never created).</exception>
-        public void Initialize(IGameClock clock)
+        public void Initialize(IGameClock clock, IInputTuning tuning)
         {
             if (_controls != null)
             {
@@ -66,6 +70,7 @@ namespace Dynasty.Input
             }
 
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _parryBuffer = new ParryPressBuffer(tuning ?? throw new ArgumentNullException(nameof(tuning)));
             AssertUpdateMode();
             _controls = new PlayerControls();
         }
@@ -98,15 +103,23 @@ namespace Dynasty.Input
         /// <inheritdoc />
         public bool TryConsumeParryPress(float notBefore, out float pressTime)
         {
-            pressTime = 0f;
-            return false;
+            if (_parryBuffer == null)
+            {
+                pressTime = 0f;
+                return false;
+            }
+
+            return _parryBuffer.TryConsume(_clock.RunTime, notBefore, out pressTime);
         }
 
         /// <inheritdoc />
         public bool HasLiveParryPress()
         {
-            return false;
+            return _parryBuffer != null && _parryBuffer.HasLive(_clock.RunTime);
         }
+
+        /// <summary>The engine-free parry buffer (InputManager-internal; tests reach it via the seam).</summary>
+        internal ParryPressBuffer ParryBuffer => _parryBuffer;
 
         /// <inheritdoc />
         public void SetRunStartTime(float runStartTime)

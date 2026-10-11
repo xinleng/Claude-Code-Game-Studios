@@ -85,20 +85,20 @@ stories:
     name: "Parry press ring buffer — liveness, pruning & capacity"
     file: "production/epics/input-manager/story-002-parry-ring-buffer-liveness.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-11"
   - id: "IM-003"
     name: "TryConsumeParryPress — consume-once, notBefore guard, most-recent wins"
     file: "production/epics/input-manager/story-003-try-consume-parry-press.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-11"
   - id: "PROTO-1"
     name: "Throwaway greybox combo + parry prototype (prototypes/)"
     file: "production/sprints/sprint-1.md"

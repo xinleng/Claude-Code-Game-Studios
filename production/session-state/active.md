@@ -325,3 +325,13 @@ The following steps were identified in the concept doc checklist. **Pick one to 
 - Story: production/epics/input-manager/story-001-player-controls-asset-and-input-manager-shell.md
 - Evidence: `tests/unit/input-manager/input_manager_context_test.cs` (14 tests), EditMode 121/121
 - Verdict: COMPLETE WITH NOTES (autonomous Sprint 1 batch; consolidated independent code review at batch end)
+
+## Session Extract — /story-done IM-002 2026-10-11
+- Story: production/epics/input-manager/story-002-parry-ring-buffer-liveness.md
+- Evidence: `tests/unit/input-manager/input_manager_parry_buffer_test.cs` (12 cases), EditMode 151/151
+- Verdict: COMPLETE WITH NOTES (autonomous Sprint 1 batch; consolidated independent code review at batch end)
+
+## Session Extract — /story-done IM-003 2026-10-11
+- Story: production/epics/input-manager/story-003-try-consume-parry-press.md
+- Evidence: `tests/unit/input-manager/input_manager_parry_consume_test.cs` (10 tests × 2 implementations), EditMode 151/151
+- Verdict: COMPLETE WITH NOTES (autonomous Sprint 1 batch; consolidated independent code review at batch end)
