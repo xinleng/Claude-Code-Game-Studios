@@ -1,7 +1,7 @@
 # Story 004: Shared [DESIGNER-ERROR] Logging Channel (Test-Assertable)
 
 > **Epic**: Bootstrap, CombatFrame & Run Clock
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-10-10
@@ -107,7 +107,7 @@
 - Logic: `tests/unit/designer-error/designer_error_channel_test.cs` — must exist and pass (EditMode)
 - Helper: `tests/helpers/RecordingDesignerErrorLog.cs` (name proposed)
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/designer-error/designer_error_channel_test.cs` (19 tests) + `tests/helpers/RecordingDesignerErrorLog.cs` — EditMode suite 57/57 green
 
 ---
 
@@ -115,3 +115,13 @@
 
 - Depends on: Story 001 (project/asmdefs) must be DONE
 - Unlocks: Story 005 (Bootstrap injects the channel); game-data epic (`GameDataValidator`), and every guard AC that asserts a designer-error marker (AC-DH-10, AC-DH-12, enemy-definition guards, progression `xp_scalar` guard)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-11
+**Criteria**: 6/6 passing (all automated). AC-5 edge case "without `LogAssert.Expect` the report fails the test" is Unity Test Framework behaviour, not automated (it cannot be asserted from inside the same test); guarded instead by a `SetUp` assertion that `LogAssert.ignoreFailingMessages` is false.
+**Deviations**: None blocking. Advisory: `RecordingDesignerErrorLog` gained `ContainsFromSystem(system)` (exact tag match) beyond the proposed `Contains(marker)` helper, so downstream AC-DH-10/12 tests can tell a guard's tag from a body mention; `Contains(null|"")` returns false.
+**Test Evidence**: Logic — `tests/unit/designer-error/designer_error_channel_test.cs` (19 tests), EditMode 57/57 via `unity test`.
+**Code Review**: Complete — unity-specialist CLEAN; qa-tester GAPS (non-blocking) → fixes applied: empty-fragment `Contains`, tag-only matcher, read-only live `Messages` view, null-system and Unity-sink null-arg tests, stricter static-field check, interface-shape test no longer pins member count, test literals hoisted to constants. Implemented inline (no programmer-agent spawn — 0.25d story). LP-CODE-REVIEW / QL-TEST-COVERAGE skipped (lean mode).
+**Follow-ups**: BCF-005 Bootstrap constructs the single `UnityDesignerErrorLog` and injects it; optional `Application.SetStackTraceLogType(LogType.Error, ScriptOnly)` there if bootstrap validation ever reports in bulk.

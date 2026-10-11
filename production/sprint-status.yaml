@@ -31,11 +31,11 @@ stories:
     name: "Shared [DESIGNER-ERROR] logging channel"
     file: "production/epics/bootstrap-combat-frame/story-004-designer-error-channel.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-11"
   - id: "BCF-003"
     name: "CombatFrame orchestrator, ITickable order, RunFrame pump & EventRecorder"
     file: "production/epics/bootstrap-combat-frame/story-003-combat-frame-orchestrator.md"

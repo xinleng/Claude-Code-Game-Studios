@@ -284,3 +284,19 @@ The following steps were identified in the concept doc checklist. **Pick one to 
 - CI licence switched to Unity Personal (Pro seat is employer-owned, both activations used by home+office PCs); UNITY_SERIAL secret deleted; test job has checks:write
 - Evidence: production/qa/smoke-2026-10-11.md
 - Next: commit + push BCF-002 (so CI runs all 38 tests) → /dev-story BCF-004
+
+## Session Extract — /dev-story 2026-10-11
+- Story: production/epics/bootstrap-combat-frame/story-004-designer-error-channel.md — Shared [DESIGNER-ERROR] logging channel
+- Files changed: src/Core/Diagnostics/IDesignerErrorLog.cs (interface + DesignerError marker/format), src/Core/Diagnostics/UnityDesignerErrorLog.cs, tests/helpers/RecordingDesignerErrorLog.cs
+- Test written: tests/unit/designer-error/designer_error_channel_test.cs (14 tests; EditMode suite 52/52 green via `unity test`)
+- Implemented inline (no agent spawn — 0.25d Logic story)
+- Blockers: None
+- Next: /code-review then /story-done story-004
+
+## Session Extract — /story-done 2026-10-11
+- Verdict: COMPLETE WITH NOTES
+- Story: production/epics/bootstrap-combat-frame/story-004-designer-error-channel.md — Shared [DESIGNER-ERROR] logging channel
+- Review: unity-specialist CLEAN; qa-tester GAPS → fixes applied; EditMode 57/57
+- CI: run 38098780516 (BCF-002 push fb350ac) green — EditMode 38/38, PlayMode 1/1
+- Tech debt logged: None
+- Next recommended: BCF-003 CombatFrame orchestrator (production/epics/bootstrap-combat-frame/story-003-combat-frame-orchestrator.md); GD-001 / OP-001 / IM-001 also ready
