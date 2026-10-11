@@ -53,7 +53,7 @@ namespace Dynasty.Tests.ObjectPools
 
         private ObjectPool Prewarmed(TestPoolSizing sizing)
         {
-            _pool = new ObjectPool(_prefabs, _spawnData, sizing, _errors, new System.Random(TestPoolSpawnData.Seed));
+            _pool = new ObjectPool(_prefabs, _spawnData, sizing, _errors, new System.Random(TestPoolSpawnData.Seed), new RecordingEnemyRegistration(), new RecordingParryFlush());
             _pool.Prewarm();
             return _pool;
         }

@@ -121,20 +121,20 @@ stories:
     name: "Deferred registration staging and pre-warm phantom guard"
     file: "production/epics/object-pool/story-003-deferred-registration-prewarm-guard.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "engine-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-11"
   - id: "OP-004"
     name: "Binding ReturnToPool order"
     file: "production/epics/object-pool/story-004-binding-return-order.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "engine-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-11"
   - id: "IM-004"
     name: "Parry capture on the performed edge, run-clock stamps & inert-until-run-start"
     file: "production/epics/input-manager/story-004-parry-capture-run-clock-timestamps.md"

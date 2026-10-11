@@ -84,7 +84,7 @@ namespace Dynasty.Tests.ObjectPools
 
         private ObjectPool NewPool(TestPoolSizing sizing, System.Random rng)
         {
-            var pool = new ObjectPool(_prefabs, _spawnData, sizing, _errors, rng);
+            var pool = new ObjectPool(_prefabs, _spawnData, sizing, _errors, rng, new RecordingEnemyRegistration(), new RecordingParryFlush());
             pool.Prewarm();
             pool.ResetInstanceIdCounter();
             _pools.Add(pool);

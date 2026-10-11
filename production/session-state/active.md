@@ -345,3 +345,13 @@ The following steps were identified in the concept doc checklist. **Pick one to 
 - Story: production/epics/input-manager/story-005-context-freeze.md
 - Evidence: `tests/unit/input-manager/input_manager_context_freeze_test.cs` (7 tests × 2 contexts), EditMode 173/173
 - Verdict: COMPLETE WITH NOTES (autonomous Sprint 1 batch; consolidated independent code review at batch end)
+
+## Session Extract — /story-done OP-003 2026-10-11
+- Story: production/epics/object-pool/story-003-deferred-registration-prewarm-guard.md
+- Evidence: `tests/unit/object-pool/object_pool_deferred_registration_test.cs` (4) + PlayMode `object_pool_deferred_registration_play_mode_test.cs` (2); EditMode 180/180, PlayMode 3/3
+- Verdict: COMPLETE WITH NOTES (autonomous Sprint 1 batch; consolidated independent code review at batch end)
+
+## Session Extract — /story-done OP-004 2026-10-11
+- Story: production/epics/object-pool/story-004-binding-return-order.md
+- Evidence: `tests/unit/object-pool/object_pool_return_order_test.cs` (3 tests), EditMode 180/180
+- Verdict: COMPLETE WITH NOTES (autonomous Sprint 1 batch; consolidated independent code review at batch end)

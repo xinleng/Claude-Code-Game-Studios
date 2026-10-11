@@ -26,14 +26,16 @@ namespace Dynasty.Gameplay
     /// <see cref="System.Random"/> → <c>SetActive(true)</c>.
     /// </para>
     /// <para>
-    /// Not yet: the <c>_initialized</c> registration guard (Story 003), the binding flush → deregister →
-    /// deactivate → push order (Story 004). Double <see cref="ReturnToPool"/> is unspecified by ADR-0005
-    /// (open item).
+    /// Registration (Story 003): each instance gets the injected <see cref="IEnemyRegistration"/> at
+    /// pre-warm; its <c>OnEnable</c> stages <c>RegisterPending</c> only after <c>Initialize</c>.
+    /// Return path (Story 004, binding order, straight-line in <see cref="ReturnToPool"/>):
+    /// <c>FlushEventsFor(AttackerId)</c> → <c>Deregister</c> → clear initialised → <c>SetActive(false)</c> →
+    /// push. Double <see cref="ReturnToPool"/> is unspecified by ADR-0005 (open item).
     /// </para>
     /// </summary>
     /// <example>
     /// <code>
-    /// var pool = new ObjectPool(prefabs, spawnData, tuningConfig, designerErrors, new System.Random(seed));
+    /// var pool = new ObjectPool(prefabs, spawnData, tuningConfig, designerErrors, new System.Random(seed), enemyManager, parrySystem);
     /// pool.Prewarm();                                    // Bootstrap, after validation
     /// EnemyController levy = pool.Spawn(EnemyType.Levy, position);
     /// </code>
@@ -50,6 +52,8 @@ namespace Dynasty.Gameplay
         private readonly IPoolSizing _sizing;
         private readonly IDesignerErrorLog _designerErrors;
         private readonly System.Random _rng;
+        private readonly IEnemyRegistration _registration;
+        private readonly IParryEventFlush _parryFlush;
         private readonly EnemyDataSO[] _dataByType = new EnemyDataSO[EnemyTypes.Count];
         private readonly EnemyController[][] _free = new EnemyController[EnemyTypes.Count][];
         private readonly int[] _freeCount = new int[EnemyTypes.Count];
@@ -62,18 +66,24 @@ namespace Dynasty.Gameplay
         /// <param name="sizing">Read-only TuningConfig pool-size view.</param>
         /// <param name="designerErrors">Shared designer-error channel.</param>
         /// <param name="rng">Injected jitter source (ADR-0010 rule 4); never <c>UnityEngine.Random</c>.</param>
+        /// <param name="registration">EnemySystemManager's staging/deregistration seam.</param>
+        /// <param name="parryFlush">ParrySystem's flush seam (step 1 of the return path).</param>
         public ObjectPool(
             IReadOnlyDictionary<EnemyType, EnemyController> prefabs,
             IReadOnlyDictionary<EnemyType, EnemyDataSO> spawnData,
             IPoolSizing sizing,
             IDesignerErrorLog designerErrors,
-            System.Random rng)
+            System.Random rng,
+            IEnemyRegistration registration,
+            IParryEventFlush parryFlush)
         {
             _prefabs = prefabs ?? throw new ArgumentNullException(nameof(prefabs));
             _spawnData = spawnData ?? throw new ArgumentNullException(nameof(spawnData));
             _sizing = sizing ?? throw new ArgumentNullException(nameof(sizing));
             _designerErrors = designerErrors ?? throw new ArgumentNullException(nameof(designerErrors));
             _rng = rng ?? throw new ArgumentNullException(nameof(rng));
+            _registration = registration ?? throw new ArgumentNullException(nameof(registration));
+            _parryFlush = parryFlush ?? throw new ArgumentNullException(nameof(parryFlush));
         }
 
         /// <summary>Parent of every pooled instance (null before <see cref="Prewarm"/>).</summary>
@@ -139,9 +149,13 @@ namespace Dynasty.Gameplay
                 throw new ArgumentNullException(nameof(enemy));
             }
 
+            // Binding order (ADR-0005 §3) — keep straight-line; never move a step into a callback.
+            _parryFlush.FlushEventsFor(enemy.AttackerId);   // 1. flush while still active, current-spawn id
+            _registration.Deregister(enemy);                // 2. deregister
+            enemy.ClearInitialized();                        //    re-activation cannot stage a phantom
+            enemy.gameObject.SetActive(false);               // 3. the only legal enemy deactivation site
             int index = (int)enemy.PoolType;
-            enemy.gameObject.SetActive(false);
-            _free[index][_freeCount[index]++] = enemy;
+            _free[index][_freeCount[index]++] = enemy;       // 4. push
         }
 
         /// <summary>
@@ -212,7 +226,7 @@ namespace Dynasty.Gameplay
             {
                 EnemyController enemy = Object.Instantiate(prefab, parent);
                 enemy.name = prefab.name + "_" + i;
-                enemy.AssignPoolType(type);
+                enemy.AssignPoolType(type, _registration);
                 enemy.gameObject.SetActive(false);
                 _free[index][i] = enemy;
             }

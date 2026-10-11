@@ -1,7 +1,7 @@
 # Story 003: Deferred registration staging and pre-warm phantom-registration guard
 
 > **Epic**: Object Pool & Enemy Lifecycle
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-10-10
@@ -96,7 +96,7 @@
 **Required evidence**:
 - Logic: `tests/unit/object-pool/object_pool_deferred_registration_test.cs`. It must exist and pass. The phantom/activation cases live in the PlayMode test assembly. Guard logic is also covered in EditMode.
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/object-pool/object_pool_deferred_registration_test.cs` (4) + PlayMode `object_pool_deferred_registration_play_mode_test.cs` (2); EditMode 180/180, PlayMode 3/3
 
 ---
 
@@ -104,3 +104,16 @@
 
 - Depends on: Story 001 (pre-warm under the inactive container), Story 002 (`Initialize` sets `_initialized`)
 - Unlocks: Story 004; Enemy AI epic (EnemySystemManager implements the registration interface)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-11
+**Criteria**: 4/4 passing.
+**Deviations**: Advisory —
+- Registration seam `IEnemyRegistration { RegisterPending; Deregister }` in `Dynasty.Gameplay` (EnemySystemManager implements it in the Enemy AI epic); the pool binds it into each instance at pre-warm (`AssignPoolType(type, registration)`), no self-wiring. `ObjectPool` constructor gains `registration` and `parryFlush`.
+- `EnemyController.IsInitialized` (public read-only) is set last in `Initialize`, cleared by the pool's return path; `OnEnable` → `internal HandleEnabled()` (stages only when initialised) so EditMode tests can drive the guard.
+- **G-7 resolved:** real activation callbacks are tested in PlayMode at `tests/PlayMode/object-pool/object_pool_deferred_registration_play_mode_test.cs` (pre-warm from an **active** template stages 0; spawn stages exactly 1; recycle stages 1 more) — PlayMode 3/3.
+- **Test infrastructure:** `tests/helpers/` is now its own assembly `Dynasty.TestHelpers` (was an EditMode `.asmref`) so PlayMode tests can use the fixtures; source assemblies grant it `InternalsVisibleTo`.
+**Test Evidence**: Logic — `tests/unit/object-pool/object_pool_deferred_registration_test.cs` (4 EditMode tests) + the PlayMode file above. EditMode 180/180, PlayMode 3/3.
+**Code Review**: Self-review during the autonomous Sprint 1 batch; consolidated independent review at batch end. LP/QL gates skipped (lean).

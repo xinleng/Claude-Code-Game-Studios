@@ -1,0 +1,21 @@
+{
+    "name": "Dynasty.TestHelpers",
+    "rootNamespace": "Dynasty.Tests.Helpers",
+    "references": [
+        "Dynasty.Core",
+        "Dynasty.GameData",
+        "Dynasty.Gameplay",
+        "Dynasty.Input"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

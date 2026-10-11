@@ -4,3 +4,4 @@ using System.Runtime.CompilerServices;
 // so the test assemblies never reference Unity.InputSystem (ADR-0004 asmdef gate).
 [assembly: InternalsVisibleTo("EditModeTests")]
 [assembly: InternalsVisibleTo("PlayModeTests")]
+[assembly: InternalsVisibleTo("Dynasty.TestHelpers")]

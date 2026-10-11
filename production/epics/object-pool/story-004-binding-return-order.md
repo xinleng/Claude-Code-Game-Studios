@@ -1,7 +1,7 @@
 # Story 004: Binding ReturnToPool order: flush parry events → deregister → deactivate → push
 
 > **Epic**: Object Pool & Enemy Lifecycle
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-10-10
@@ -105,7 +105,7 @@
 **Required evidence**:
 - Logic: `tests/unit/object-pool/object_pool_return_order_test.cs`. It must exist and pass (EditMode spies + EventRecorder; static-scan test included).
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/object-pool/object_pool_return_order_test.cs` (3 tests), EditMode 180/180
 
 ---
 
@@ -113,3 +113,16 @@
 
 - Depends on: Story 002 (AttackerId), Story 003 (registration seam + `_initialized`). It also needs the bootstrap-combat-frame epic's `EventRecorder` helper (ADR-0010).
 - Unlocks: Story 006; Parry epic (ParrySystem implements the flush interface); Enemy AI epic AC-19; WaveSpawner AC-WS-05/06
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-11
+**Criteria**: 5/5 passing.
+**Deviations**: Advisory —
+- Flush seam `IParryEventFlush { FlushEventsFor(int) }` in `Dynasty.Core` (same signature as architecture.md `IParrySystem.FlushEventsFor`; the Parry epic's `IParrySystem` extends it).
+- `ReturnToPool` is straight-line: flush(current AttackerId) → deregister → clear initialised → `SetActive(false)` → push. Order proven with an `EventRecorder` plus state sampled inside the spies (active at flush and at deregister; free count unchanged at flush).
+- AC-5 static scan reads `src/**/*.cs` (file I/O in a unit test — accepted here because the story requires it; overlaps BCF-006, gap G-8). Allow-list: `Gameplay/Pooling/ObjectPool.cs` (both patterns) and the generated `Input/PlayerControls.cs` (`Destroy(` of its own InputActionAsset). Word-boundary regex so `OnDestroy()`/`DestroyImmediate(` don't false-positive.
+- **Open (unchanged):** double `ReturnToPool` remains unguarded pending an ADR-0005 amendment.
+**Test Evidence**: Logic — `tests/unit/object-pool/object_pool_return_order_test.cs` (3 tests). EditMode 180/180.
+**Code Review**: Self-review during the autonomous Sprint 1 batch; consolidated independent review at batch end. LP/QL gates skipped (lean).
