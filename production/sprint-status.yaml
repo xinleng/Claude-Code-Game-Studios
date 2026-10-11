@@ -67,11 +67,11 @@ stories:
     name: "Per-spawn AttackerId and spawn-time cooldown jitter"
     file: "production/epics/object-pool/story-002-attacker-id-spawn-jitter.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "engine-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-11"
   - id: "IM-001"
     name: "PlayerControls asset, single instance & SetContext map switching"
     file: "production/epics/input-manager/story-001-player-controls-asset-and-input-manager-shell.md"

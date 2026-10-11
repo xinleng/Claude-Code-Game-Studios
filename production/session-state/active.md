@@ -315,3 +315,8 @@ The following steps were identified in the concept doc checklist. **Pick one to 
 - Story: production/epics/object-pool/story-001-pool-core-prewarm-spawn-return.md
 - Evidence: `tests/unit/object-pool/object_pool_core_test.cs` (14 tests), EditMode 98/98
 - Verdict: COMPLETE WITH NOTES (autonomous Sprint 1 batch; consolidated independent code review at batch end)
+
+## Session Extract — /story-done OP-002 2026-10-11
+- Story: production/epics/object-pool/story-002-attacker-id-spawn-jitter.md
+- Evidence: `tests/unit/object-pool/object_pool_spawn_identity_test.cs` (9 tests), EditMode 107/107
+- Verdict: COMPLETE WITH NOTES (autonomous Sprint 1 batch; consolidated independent code review at batch end)

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Dynasty.Core;
 using Dynasty.GameData;
 using UnityEngine;
@@ -19,38 +20,60 @@ namespace Dynasty.Gameplay
     /// until <see cref="Spawn"/>, which is when <c>Awake</c> first runs. Main thread only.
     /// </para>
     /// <para>
-    /// Not yet in this story: AttackerId + spawn jitter (Story 002), the <c>_initialized</c>
-    /// registration guard (Story 003), the binding flush → deregister → deactivate → push order
-    /// (Story 004). Double <see cref="ReturnToPool"/> is unspecified by ADR-0005 (open item).
+    /// Spawn path (ADR-0005 §2, amended): pop → <see cref="EnemyController.Initialize"/> with
+    /// <c>AttackerId = _nextInstanceId++</c> (instance field — per spawn, never per slot, never static)
+    /// and <c>initialCooldownMs = rng.Next(0, attack_cooldown_ms)</c> from the injected
+    /// <see cref="System.Random"/> → <c>SetActive(true)</c>.
+    /// </para>
+    /// <para>
+    /// Not yet: the <c>_initialized</c> registration guard (Story 003), the binding flush → deregister →
+    /// deactivate → push order (Story 004). Double <see cref="ReturnToPool"/> is unspecified by ADR-0005
+    /// (open item).
     /// </para>
     /// </summary>
     /// <example>
     /// <code>
-    /// var pool = new ObjectPool(prefabs, tuningConfig, designerErrors);
+    /// var pool = new ObjectPool(prefabs, spawnData, tuningConfig, designerErrors, new System.Random(seed));
     /// pool.Prewarm();                                    // Bootstrap, after validation
     /// EnemyController levy = pool.Spawn(EnemyType.Levy, position);
     /// </code>
     /// </example>
     public sealed class ObjectPool : IObjectPool, IDisposable
     {
+        /// <summary>AttackerId assigned to the first spawn of a fresh (or reset) pool. 0 is never a valid id.</summary>
+        public const int FirstAttackerId = 1;
+
         private const string SystemTag = "ObjectPool";
 
         private readonly IReadOnlyDictionary<EnemyType, EnemyController> _prefabs;
+        private readonly IReadOnlyDictionary<EnemyType, EnemyDataSO> _spawnData;
         private readonly IPoolSizing _sizing;
         private readonly IDesignerErrorLog _designerErrors;
+        private readonly System.Random _rng;
+        private readonly EnemyDataSO[] _dataByType = new EnemyDataSO[EnemyTypes.Count];
         private readonly EnemyController[][] _free = new EnemyController[EnemyTypes.Count][];
         private readonly int[] _freeCount = new int[EnemyTypes.Count];
         private GameObject _container;
+        private int _nextInstanceId = FirstAttackerId;
 
         /// <summary>Creates an empty pool; call <see cref="Prewarm"/> before spawning.</summary>
         /// <param name="prefabs">Prefab per enemy type (types with a 0 pool count may be absent).</param>
+        /// <param name="spawnData">Active spawn data per enemy type (Warlord: Phase 1 asset).</param>
         /// <param name="sizing">Read-only TuningConfig pool-size view.</param>
         /// <param name="designerErrors">Shared designer-error channel.</param>
-        public ObjectPool(IReadOnlyDictionary<EnemyType, EnemyController> prefabs, IPoolSizing sizing, IDesignerErrorLog designerErrors)
+        /// <param name="rng">Injected jitter source (ADR-0010 rule 4); never <c>UnityEngine.Random</c>.</param>
+        public ObjectPool(
+            IReadOnlyDictionary<EnemyType, EnemyController> prefabs,
+            IReadOnlyDictionary<EnemyType, EnemyDataSO> spawnData,
+            IPoolSizing sizing,
+            IDesignerErrorLog designerErrors,
+            System.Random rng)
         {
             _prefabs = prefabs ?? throw new ArgumentNullException(nameof(prefabs));
+            _spawnData = spawnData ?? throw new ArgumentNullException(nameof(spawnData));
             _sizing = sizing ?? throw new ArgumentNullException(nameof(sizing));
             _designerErrors = designerErrors ?? throw new ArgumentNullException(nameof(designerErrors));
+            _rng = rng ?? throw new ArgumentNullException(nameof(rng));
         }
 
         /// <summary>Parent of every pooled instance (null before <see cref="Prewarm"/>).</summary>
@@ -100,6 +123,9 @@ namespace Dynasty.Gameplay
             int top = --_freeCount[index];
             EnemyController enemy = _free[index][top];
             _free[index][top] = null;
+            EnemyDataSO data = _dataByType[index];
+            var spawnParams = new SpawnParams(_nextInstanceId++, _rng.Next(0, data.AttackCooldownMs), data, position);
+            enemy.Initialize(in spawnParams);
             enemy.transform.position = position;
             enemy.gameObject.SetActive(true);
             return enemy;
@@ -116,6 +142,16 @@ namespace Dynasty.Gameplay
             int index = (int)enemy.PoolType;
             enemy.gameObject.SetActive(false);
             _free[index][_freeCount[index]++] = enemy;
+        }
+
+        /// <summary>
+        /// Test seam (ADR-0010 rule 5; damage-health Contract #6): the next spawn receives
+        /// <see cref="FirstAttackerId"/>. Editor-only — compiled out of player builds.
+        /// </summary>
+        [Conditional("UNITY_EDITOR")]
+        public void ResetInstanceIdCounter()
+        {
+            _nextInstanceId = FirstAttackerId;
         }
 
         /// <summary>Number of inactive instances currently available for <paramref name="type"/>.</summary>
@@ -161,6 +197,15 @@ namespace Dynasty.Gameplay
                 _designerErrors.Report(SystemTag, type + " has pool count " + count + " but no prefab assigned.");
                 return;
             }
+
+            if (!_spawnData.TryGetValue(type, out EnemyDataSO data) || data == null)
+            {
+                _free[index] = Array.Empty<EnemyController>();
+                _designerErrors.Report(SystemTag, type + " has pool count " + count + " but no EnemyDataSO assigned.");
+                return;
+            }
+
+            _dataByType[index] = data;
 
             Transform parent = _container.transform;
             for (int i = 0; i < count; i++)

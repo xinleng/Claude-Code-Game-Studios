@@ -19,6 +19,7 @@ namespace Dynasty.Tests.ObjectPools
     {
         private readonly List<Object> _cleanup = new List<Object>();
         private Dictionary<EnemyType, EnemyController> _prefabs;
+        private Dictionary<EnemyType, EnemyDataSO> _spawnData;
         private RecordingDesignerErrorLog _errors;
         private ObjectPool _pool;
 
@@ -27,6 +28,7 @@ namespace Dynasty.Tests.ObjectPools
         {
             _errors = new RecordingDesignerErrorLog();
             _prefabs = new Dictionary<EnemyType, EnemyController>();
+            _spawnData = TestPoolSpawnData.Create(_cleanup);
             for (int i = 0; i < EnemyTypes.Count; i++)
             {
                 var type = (EnemyType)i;
@@ -51,7 +53,7 @@ namespace Dynasty.Tests.ObjectPools
 
         private ObjectPool Prewarmed(TestPoolSizing sizing)
         {
-            _pool = new ObjectPool(_prefabs, sizing, _errors);
+            _pool = new ObjectPool(_prefabs, _spawnData, sizing, _errors, new System.Random(TestPoolSpawnData.Seed));
             _pool.Prewarm();
             return _pool;
         }

@@ -1,7 +1,7 @@
 # Story 002: Per-spawn AttackerId and spawn-time cooldown jitter via Initialize(in SpawnParams)
 
 > **Epic**: Object Pool & Enemy Lifecycle
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-10-10
@@ -116,7 +116,7 @@
 **Required evidence**:
 - Logic: `tests/unit/object-pool/object_pool_spawn_identity_test.cs`. It must exist and pass (EditMode, deterministic, seeded/scripted RNG only).
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/object-pool/object_pool_spawn_identity_test.cs` (9 tests), EditMode 107/107
 
 ---
 
@@ -124,3 +124,16 @@
 
 - Depends on: Story 001 (pool core). Also needs the game-data epic's `EnemyDataSO` type with `attack_cooldown_ms` (tests may use `ScriptableObject.CreateInstance` in-memory).
 - Unlocks: Story 003, Story 004, Story 005; Enemy AI epic's AC-18 test
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-11
+**Criteria**: 6/6 passing. AC-6 (same-frame jitter spread) passes with the named seed `TestPoolSpawnData.Seed = 20261010` — not re-rolled.
+**Deviations**: Advisory —
+- `ObjectPool` constructor gains `spawnData` (per-type active `EnemyDataSO`; Warlord = Phase 1) and the injected `System.Random`; a type with count > 0 and no data reports a designer error at pre-warm.
+- `ObjectPool.FirstAttackerId = 1` (0 is never a valid id) — the documented initial value AC-1/AC-3 assert against.
+- `EnemyController.Initialize(in SpawnParams)` is `internal` (pool-only); it also records two internal test observations (`InitializeCount`, `ActiveSelfAtLastInitialize`) for AC-5 instead of a test double subclass (the controller is sealed).
+- **Open item:** Iron Captain tiers share one pool and `Spawn(type, position)` has no tier argument, so the injected map supplies one tier's data. WaveSpawner needs a way to pick the 5/10/15-min tier (e.g. per-spawn data override) — raise with the WaveSpawner / Enemy AI epics; would need an ADR-0005 amendment since `SpawnParams` fields are fixed.
+**Test Evidence**: Logic — `tests/unit/object-pool/object_pool_spawn_identity_test.cs` (9 tests); helper `tests/helpers/TestPoolSpawnData.cs`. EditMode 107/107.
+**Code Review**: Self-review during the autonomous Sprint 1 batch; consolidated independent review at batch end. LP/QL gates skipped (lean).
