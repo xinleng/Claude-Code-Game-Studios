@@ -252,8 +252,11 @@ namespace Dynasty.Tests.GameClock
         {
             // Arrange
             var clockMethods = typeof(IGameClock).GetMethods(BindingFlags.Public | BindingFlags.Instance);
-            var controlMethods = typeof(IRunClockControl).GetMethods(BindingFlags.Public | BindingFlags.Instance);
+            // IRunClockControl inherits ToRunTime from the read-only IRunTimeConverter seam (G-2, IM-004).
+            var controlMethods = typeof(IRunClockControl).GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                .Concat(typeof(IRunClockControl).GetInterfaces().SelectMany(i => i.GetMethods()));
             var controlNames = controlMethods.Select(m => m.Name).ToArray();
+            Assert.That(typeof(IRunTimeConverter).GetMethods().Select(m => m.Name), Is.EqualTo(new[] { "ToRunTime" }));
 
             // Act / Assert
             Assert.That(clockMethods.All(m => m.IsSpecialName && m.Name.StartsWith("get_", StringComparison.Ordinal)),

@@ -18,15 +18,19 @@ namespace Dynasty.Input
     /// </para>
     /// <para>
     /// Parry presses live in the engine-free <see cref="ParryPressBuffer"/> (Stories 002–003); peeks and
-    /// consumes use the injected clock's <c>RunTime</c>. Still to come: capture + run-clock stamps (004),
-    /// freeze (005), move/steer (006), <c>[-200]</c> anchor + <c>Tick()</c>/prune (007), UI module binder
-    /// (008), control card (011) — until then those members return neutral values. Main thread only.
+    /// consumes use the injected clock's <c>RunTime</c>. Capture (Story 004): <c>Parry.performed</c> only
+    /// (one press per physical press, no autofire) → <c>ctx.time</c> converted to RunTime through the
+    /// read-only <see cref="IRunTimeConverter"/> → recorded, but only after <see cref="SetRunStartTime"/>
+    /// and while the context is Gameplay. Freeze (Story 005): outside Gameplay nothing is added and
+    /// <see cref="Tick"/> does not prune. Still to come: move/steer (006), the <c>[-200]</c> anchor calling
+    /// <see cref="Tick"/> (007), UI module binder (008), control card (011) — until then those
+    /// members return neutral values. Main thread only.
     /// </para>
     /// </summary>
     /// <example>
     /// <code>
     /// var input = go.AddComponent&lt;InputManager&gt;();
-    /// input.Initialize(clock, tuning);            // Bootstrap
+    /// input.Initialize(clock, clock, tuning);     // Bootstrap: UnityGameClock is both IGameClock and IRunTimeConverter
     /// input.SetContext(InputContext.Menu);        // RSM: selection screen
     /// </code>
     /// </example>
@@ -34,7 +38,11 @@ namespace Dynasty.Input
     public sealed class InputManager : MonoBehaviour, IInputAuthority, IDisposable
     {
         private IGameClock _clock;
+        private IRunTimeConverter _runTimeConverter;
         private ParryPressBuffer _parryBuffer;
+        private Action<InputAction.CallbackContext> _onParryPerformed;
+        private bool _runStarted;
+        private float _runStartTime;
         private PlayerControls _controls;
         private bool _hasContext;
         private InputContext _context;
@@ -59,10 +67,11 @@ namespace Dynasty.Input
         /// <see cref="PlayerControls"/> instance with every map disabled. May be called exactly once.
         /// </summary>
         /// <param name="clock">Run clock: parry liveness and stamps use <see cref="IGameClock.RunTime"/>.</param>
+        /// <param name="runTimeConverter">Converts <c>ctx.time</c> press stamps to RunTime (read-only seam; never the RSM control).</param>
         /// <param name="tuning">Input section of TuningConfig (parry window and buffer capacity).</param>
         /// <exception cref="ArgumentNullException">An argument is null.</exception>
         /// <exception cref="InvalidOperationException">Already initialised (a second instance is never created).</exception>
-        public void Initialize(IGameClock clock, IInputTuning tuning)
+        public void Initialize(IGameClock clock, IRunTimeConverter runTimeConverter, IInputTuning tuning)
         {
             if (_controls != null)
             {
@@ -70,9 +79,12 @@ namespace Dynasty.Input
             }
 
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _runTimeConverter = runTimeConverter ?? throw new ArgumentNullException(nameof(runTimeConverter));
             _parryBuffer = new ParryPressBuffer(tuning ?? throw new ArgumentNullException(nameof(tuning)));
             AssertUpdateMode();
             _controls = new PlayerControls();
+            _onParryPerformed = HandleParryPerformed;   // cached method-group delegate (ADR-0003: no per-press closures)
+            _controls.Gameplay.Parry.performed += _onParryPerformed;
         }
 
         /// <inheritdoc />
@@ -122,14 +134,65 @@ namespace Dynasty.Input
         internal ParryPressBuffer ParryBuffer => _parryBuffer;
 
         /// <inheritdoc />
+        /// <remarks>
+        /// Arms parry capture (AC-IM-10). Stamps are converted through the injected
+        /// <see cref="IRunTimeConverter"/>, whose origin RSM marked just before this call (ADR-0012 run-start
+        /// order: origin → <c>SetRunStartTime</c> → <c>ResetForNewRun</c> → <c>SetContext(Gameplay)</c>); the value
+        /// is kept for diagnostics. Whether a retry also clears the buffer (<c>IRunResettable</c>) is an open item.
+        /// </remarks>
         public void SetRunStartTime(float runStartTime)
         {
+            _runStartTime = runStartTime;
+            _runStarted = true;
+        }
+
+        /// <summary>The value passed to the last <see cref="SetRunStartTime"/> call (diagnostics).</summary>
+        public float RunStartTime => _runStartTime;
+
+        /// <summary>True once <see cref="SetRunStartTime"/> has armed capture.</summary>
+        public bool IsCaptureArmed => _runStarted;
+
+        /// <summary>
+        /// Device-free capture path (tests call it directly; the <c>performed</c> callback forwards
+        /// <c>ctx.time</c> here). Records one press stamped on RunTime when capture is armed and the context
+        /// is Gameplay; otherwise does nothing. Never reads scaled time; never consults i-frames.
+        /// </summary>
+        /// <param name="eventTime">Input event time on the <c>realtimeSinceStartup</c> basis.</param>
+        internal void OnParryPerformed(double eventTime)
+        {
+            if (!_runStarted || !_hasContext || _context != InputContext.Gameplay)
+            {
+                return;
+            }
+
+            float pressTime = _runTimeConverter.ToRunTime(eventTime);
+            if (float.IsNaN(pressTime) || float.IsInfinity(pressTime))
+            {
+                return;
+            }
+
+            _parryBuffer.Record(pressTime);
         }
 
         /// <inheritdoc />
         public string GetActiveBindingDisplay(GameAction action)
         {
             return string.Empty;
+        }
+
+        /// <summary>
+        /// Per-frame input step (ADR-0004 rule 2). Prunes expired parry presses in the RunTime domain —
+        /// only while the context is Gameplay: in Menu/Paused the buffer is frozen (no prune, no add; ADR-0004
+        /// rule 4, GDD States table), so the first Gameplay tick after a menu prunes anything that aged out.
+        /// Freezing never clears the buffer. Story 007 places this call in the <c>[-200]</c> slot; until then
+        /// the caller pumps it.
+        /// </summary>
+        public void Tick()
+        {
+            if (_parryBuffer != null && _hasContext && _context == InputContext.Gameplay)
+            {
+                _parryBuffer.Prune(_clock.RunTime);
+            }
         }
 
         /// <summary>Disables every map and disposes the controls (scene teardown).</summary>
@@ -140,6 +203,7 @@ namespace Dynasty.Input
                 return;
             }
 
+            _controls.Gameplay.Parry.performed -= _onParryPerformed;
             _controls.Disable();
             if (Application.isPlaying)
             {
@@ -153,6 +217,11 @@ namespace Dynasty.Input
 
             _controls = null;
             _hasContext = false;
+        }
+
+        private void HandleParryPerformed(InputAction.CallbackContext context)
+        {
+            OnParryPerformed(context.time);
         }
 
         private void OnDestroy()

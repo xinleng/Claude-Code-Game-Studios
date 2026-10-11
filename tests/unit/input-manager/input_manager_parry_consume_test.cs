@@ -65,7 +65,7 @@ namespace Dynasty.Tests.InputManagers
             public InputManagerHarness()
             {
                 _input = _go.AddComponent<InputManager>();
-                _input.Initialize(_clock, TestInputTuning.Default());
+                _input.Initialize(_clock, _clock, TestInputTuning.Default());
                 _clock.MarkRunOrigin();
             }
 

@@ -1,7 +1,7 @@
 # Story 004: Parry capture on the performed edge, run-clock stamps & inert-until-run-start
 
 > **Epic**: Input Manager
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-10-10
@@ -114,7 +114,7 @@
 **Required evidence**:
 - Logic: `tests/unit/input-manager/input_manager_timestamp_test.cs` — must exist and pass (EditMode, injected clock, synthetic presses)
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/input-manager/input_manager_timestamp_test.cs` (8 tests), EditMode 173/173
 
 ---
 
@@ -122,3 +122,18 @@
 
 - Depends on: Story 001, Story 002, Story 003; bootstrap-combat-frame IGameClock story (`IGameClock.RunTime` + event-time conversion)
 - Unlocks: Story 005, Story 007, Story 010
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-11
+**Criteria**: 6/6 passing (AC-IM-09 at the handler seam; device-level re-check is Story 010).
+**Deviations**: Advisory —
+- **G-2 resolved (autonomous decision — ratify/adjust):** new read-only `IRunTimeConverter { float ToRunTime(double) }` in `Dynasty.Core`; `IRunClockControl` now extends it. `InputManager.Initialize(clock, runTimeConverter, tuning)` — Bootstrap passes the same `UnityGameClock` for both. ADR-0004 carries a dated amendment note. BCF-002 test updated for the inherited member.
+- `Parry.performed` subscribed once with a cached method-group delegate, unsubscribed in `Dispose`; the callback forwards `ctx.time` to `internal OnParryPerformed(double)` (device-free seam). Non-finite converted stamps are dropped (never recorded with an undefined time).
+- **AC-IM-11 scoped** per the story's conflict flag: tests assert stamp coherence while paused (finite, frozen at pause start, ≥ last pre-pause stamp) and that **no** press is buffered in Paused — the GDD AC-IM-11 text still needs game-designer correction.
+- "Subscribes `performed` only" is code-reviewed (no started/canceled handlers); the asset check that Parry has no interactions is automated.
+- **Open (unchanged):** whether InputManager is an `IRunResettable` (clear buffer on retry).
+- Test file at the story's path `input_manager_timestamp_test.cs` (class `InputManagerParryCaptureTest`).
+**Test Evidence**: Logic — `tests/unit/input-manager/input_manager_timestamp_test.cs` (8 tests). EditMode 173/173.
+**Code Review**: Self-review during the autonomous Sprint 1 batch; consolidated independent review at batch end. LP/QL gates skipped (lean).

@@ -335,3 +335,13 @@ The following steps were identified in the concept doc checklist. **Pick one to 
 - Story: production/epics/input-manager/story-003-try-consume-parry-press.md
 - Evidence: `tests/unit/input-manager/input_manager_parry_consume_test.cs` (10 tests × 2 implementations), EditMode 151/151
 - Verdict: COMPLETE WITH NOTES (autonomous Sprint 1 batch; consolidated independent code review at batch end)
+
+## Session Extract — /story-done IM-004 2026-10-11
+- Story: production/epics/input-manager/story-004-parry-capture-run-clock-timestamps.md
+- Evidence: `tests/unit/input-manager/input_manager_timestamp_test.cs` (8 tests), EditMode 173/173
+- Verdict: COMPLETE WITH NOTES (autonomous Sprint 1 batch; consolidated independent code review at batch end)
+
+## Session Extract — /story-done IM-005 2026-10-11
+- Story: production/epics/input-manager/story-005-context-freeze.md
+- Evidence: `tests/unit/input-manager/input_manager_context_freeze_test.cs` (7 tests × 2 contexts), EditMode 173/173
+- Verdict: COMPLETE WITH NOTES (autonomous Sprint 1 batch; consolidated independent code review at batch end)

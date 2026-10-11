@@ -1,7 +1,7 @@
 # Story 005: Parry buffer freeze outside Gameplay
 
 > **Epic**: Input Manager
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-10-10
@@ -106,7 +106,7 @@
 **Required evidence**:
 - Logic: `tests/unit/input-manager/input_manager_context_freeze_test.cs` — must exist and pass (EditMode, injected clock)
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/input-manager/input_manager_context_freeze_test.cs` (7 tests × 2 contexts), EditMode 173/173
 
 ---
 
@@ -114,3 +114,15 @@
 
 - Depends on: Story 001, Story 004; bootstrap-combat-frame IGameClock story
 - Unlocks: Story 007, Story 010
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-11
+**Criteria**: 5/5 passing.
+**Deviations**: Advisory —
+- Added `InputManager.Tick()` now (prune only while Gameplay) because the freeze ACs are defined against Tick; Story 007 still owns the `[-200]` anchor and the per-frame call site.
+- **Clock-semantics flag (OQ-02) — behaviour recorded, not changed:** with the pause-compensated `RunTime`, a press made just before a level-up pause does **not** age during the pick and is still live on resume (asserted explicitly in `test_freeze_pause_compensated_press_is_still_live_after_resume_oq_02`). The GDD States table assumed an unpaused clock. Changing this needs a GDD/ADR decision (game-designer + technical-director).
+- Tests run for both Menu and Paused via `[TestFixture(InputContext.Menu)]` / `[TestFixture(InputContext.Paused)]`.
+**Test Evidence**: Logic — `tests/unit/input-manager/input_manager_context_freeze_test.cs` (7 tests × 2 contexts). EditMode 173/173.
+**Code Review**: Self-review during the autonomous Sprint 1 batch; consolidated independent review at batch end. LP/QL gates skipped (lean).

@@ -31,6 +31,12 @@ namespace Dynasty.Input
             return action.bindings.Where(b => !b.isComposite).Select(b => b.path + "|" + b.groups).ToArray();
         }
 
+        /// <summary>Interactions string of an action (empty = none; Parry must have none, ADR-0004).</summary>
+        internal static string ActionInteractions(InputManager manager, string mapName, string actionName)
+        {
+            return manager.Controls.asset.FindActionMap(mapName, true).FindAction(actionName, true).interactions ?? string.Empty;
+        }
+
         /// <summary>Names of the control schemes on the controls instance.</summary>
         internal static string[] ControlSchemes(InputManager manager)
         {

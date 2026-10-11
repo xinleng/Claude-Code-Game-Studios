@@ -112,7 +112,7 @@
 **Required evidence**:
 - Logic: `tests/unit/input-manager/input_manager_parry_consume_test.cs` — must exist and pass (EditMode, deterministic)
 
-**Status**: [x] `tests/unit/input-manager/input_manager_parry_consume_test.cs` (10 tests × 2 implementations), EditMode 151/151
+**Status**: [x] `tests/unit/input-manager/input_manager_parry_consume_test.cs` (9 tests × 2 implementations), EditMode 151/151
 
 ---
 
@@ -130,5 +130,5 @@
 - Consume logic lives on `ParryPressBuffer.TryConsume(currentTime, notBefore, out pressTime)`; `InputManager.TryConsumeParryPress` / `HasLiveParryPress` forward with `IGameClock.RunTime` (exact architecture.md signatures, no time parameter).
 - `FakeInputAuthority` (`tests/helpers/`) reuses the same `ParryPressBuffer`, with settable `Now`; the contract test runs every case against both the real InputManager (presses injected via `InputManagerTestSeam.RecordParryPress` — the `Parry.performed` capture path is IM-004) and the fake via `[TestFixture("InputManager")]` / `[TestFixture("Fake")]`.
 - No window/back-edge logic in Input Manager (asserted: the consume API takes only `notBefore`).
-**Test Evidence**: Logic — `tests/unit/input-manager/input_manager_parry_consume_test.cs` (10 tests × 2 implementations). EditMode 151/151.
+**Test Evidence**: Logic — `tests/unit/input-manager/input_manager_parry_consume_test.cs` (9 tests × 2 implementations). EditMode 151/151.
 **Code Review**: Self-review during the autonomous Sprint 1 batch; consolidated independent review at batch end. LP/QL gates skipped (lean).

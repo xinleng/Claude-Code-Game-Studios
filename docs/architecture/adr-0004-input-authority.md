@@ -3,6 +3,8 @@
 ## Status
 Accepted
 *(Proposed and Accepted 2026-07-04, autonomous session — user directive to proceed; lean review mode.)*
+*(Amended 2026-10-11, input-manager Story 004, autonomous Sprint 1 batch — ratify/adjust: the `ctx.time` → RunTime conversion reaches InputManager through a new read-only `IRunTimeConverter { float ToRunTime(double) }` seam in `Dynasty.Core`, which `IRunClockControl` now extends. InputManager receives the converter, never the RSM-only control interface — resolves QA gap G-2. Bootstrap passes the same `UnityGameClock` instance for both.)*
+
 *(Amended 2026-10-10 by /architecture-review: (a) press timestamps move to the unified run clock on the Input System event-time basis — resolves blocking clock-domain conflict C1; (b) single `PlayerControls` instance shared with the UI input module via `UiInputModuleBinder` — resolves blocking finding N2; (c) authority invariant becomes an assembly-scoped compile-time gate; (d) UI action map widened to a superset. Findings from the independent engine-specialist audit.)*
 
 ## Date

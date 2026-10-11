@@ -44,7 +44,8 @@ namespace Dynasty.Tests.InputManagers
 
         private void Init()
         {
-            _input.Initialize(new FakeGameClock(), TestInputTuning.Default());
+            var clock = new FakeGameClock();
+            _input.Initialize(clock, clock, TestInputTuning.Default());
         }
 
         private (bool Gameplay, bool Ui) Maps()

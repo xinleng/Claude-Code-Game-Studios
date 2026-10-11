@@ -139,20 +139,20 @@ stories:
     name: "Parry capture on the performed edge, run-clock stamps & inert-until-run-start"
     file: "production/epics/input-manager/story-004-parry-capture-run-clock-timestamps.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-11"
   - id: "IM-005"
     name: "Parry buffer freeze outside Gameplay"
     file: "production/epics/input-manager/story-005-context-freeze.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.25
     blocker: ""
-    completed: ""
+    completed: "2026-10-11"
   - id: "BCF-005"
     name: "Bootstrap composition root — boot order & DI wiring"
     file: "production/epics/bootstrap-combat-frame/story-005-bootstrap-composition-root.md"
