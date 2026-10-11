@@ -58,11 +58,11 @@ stories:
     name: "Pool core: pre-warm, Spawn/ReturnToPool, exhaustion policy"
     file: "production/epics/object-pool/story-001-pool-core-prewarm-spawn-return.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "engine-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-11"
   - id: "OP-002"
     name: "Per-spawn AttackerId and spawn-time cooldown jitter"
     file: "production/epics/object-pool/story-002-attacker-id-spawn-jitter.md"

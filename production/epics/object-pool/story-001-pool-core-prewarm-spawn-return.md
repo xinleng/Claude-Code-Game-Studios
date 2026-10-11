@@ -1,7 +1,7 @@
 # Story 001: Pool core: pre-warm, Spawn/ReturnToPool, exhaustion policy
 
 > **Epic**: Object Pool & Enemy Lifecycle
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-10-10
@@ -124,7 +124,7 @@
 **Required evidence**:
 - Logic: `tests/unit/object-pool/object_pool_core_test.cs`. It must exist and pass (EditMode, deterministic; a fresh pool built in `[SetUp]`).
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/object-pool/object_pool_core_test.cs` (14 tests), EditMode 98/98
 
 ---
 
@@ -132,3 +132,18 @@
 
 - Depends on: bootstrap-combat-frame Story 001 (project setup). It also needs the bootstrap-combat-frame epic's `[DESIGNER-ERROR]` channel (TR-TP-002) and `TestConfigs` factories (ADR-0010), and the game-data epic's `TuningConfig` type (tests may use an in-memory instance until the game-data stories land).
 - Unlocks: Story 002, Story 003, Story 004, Story 005
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-11
+**Criteria**: 7/7 passing.
+**Deviations**: Advisory —
+- Pool key is `EnemyType` (GD-001 enum); architecture.md names it `EnemyTypeId` — same concept, no second enum. Iron Captain tiers share one IronCaptain pool (count 1); tier data arrives via spawn params (OP-002).
+- New assembly `Dynasty.Gameplay` (`src/Gameplay/`, refs Core + GameData; IVT to tests) holds `IObjectPool`, `ObjectPool` and the `EnemyController` lifecycle shell (Enemy AI epic extends it).
+- Read-only sizing view `IPoolSizing` (in `Dynasty.GameData`, `src/GameData/Tuning/`); `TuningConfig` implements it in GD-003. Tests use `tests/helpers/TestPoolSizing.cs` (stand-in for `TestConfigs`, gap G-5).
+- Activation strategy (to confirm with unity-specialist): instantiate under an **inactive** container → self-deactivate each instance → activate container; instances stay `activeSelf == false` until `Spawn`.
+- Extra API: `Prewarm()` (idempotent), `FreeCount(type)`, `Container`, `IsPrewarmed`, `IDisposable`. A type with count > 0 but no prefab reports a designer error.
+- **Open (not resolved, per story):** double `ReturnToPool` on an already-pooled instance is unguarded — needs an ADR-0005 amendment (raise with OP-004).
+**Test Evidence**: Logic — `tests/unit/object-pool/object_pool_core_test.cs` (14 tests). EditMode 98/98.
+**Code Review**: Self-review during the autonomous Sprint 1 batch; consolidated independent review at batch end. LP/QL gates skipped (lean).
