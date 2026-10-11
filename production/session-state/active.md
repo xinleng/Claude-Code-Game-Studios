@@ -305,3 +305,8 @@ The following steps were identified in the concept doc checklist. **Pick one to 
 - Story: production/epics/bootstrap-combat-frame/story-003-combat-frame-orchestrator.md
 - Evidence: `tests/unit/combat-frame/combat_frame_order_test.cs` + `combat_frame_event_recorder_test.cs` (14 tests), EditMode 71/71
 - Verdict: COMPLETE WITH NOTES (autonomous Sprint 1 batch; consolidated independent code review at batch end)
+
+## Session Extract — /story-done GD-001 2026-10-11
+- Story: production/epics/game-data/story-001-enemy-data-so.md
+- Evidence: `tests/unit/game-data/game_data_enemy_data_test.cs` (13 tests), EditMode 84/84
+- Verdict: COMPLETE WITH NOTES (autonomous Sprint 1 batch; consolidated independent code review at batch end)

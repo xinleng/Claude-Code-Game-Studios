@@ -1,7 +1,7 @@
 # Story 001: EnemyDataSO — per-type/tier enemy data assets (incl. Warlord P1 + P2)
 
 > **Epic**: GameData Configuration & Validation
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-10-10
@@ -129,7 +129,7 @@
 **Required evidence**:
 - Logic: `tests/unit/game-data/game_data_enemy_data_test.cs` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/game-data/game_data_enemy_data_test.cs` (13 tests), EditMode 84/84
 
 ---
 
@@ -137,3 +137,18 @@
 
 - Depends on: bootstrap-combat-frame Story 001 (Unity 6.3 project setup, asmdefs, Test Framework, CI) must be DONE
 - Unlocks: Story 004 (TestConfigs factory), Story 005 (enemy validation rules), Story 006 (dodge rule reads slam radius), Story 007 (registry cross-check)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-11
+**Criteria**: 6/6 passing.
+**Deviations**: Advisory —
+- New assembly `Dynasty.GameData` (`src/GameData/`, no references) with `InternalsVisibleTo` for both test assemblies; both test asmdefs now reference it.
+- Assets authored at `Assets/GameData/Enemies/{Levy,Pikeman,Archer,IronCaptain5,IronCaptain10,IronCaptain15,WarlordP1,WarlordP2}.asset` by a one-shot batchmode script (deleted after use).
+- `SpawnWeight` is guarded like the elite groups (`TryGetSpawnWeight`) and **unset on all 8 assets** — no GDD value exists (open item stands: designer to supply).
+- Warlord-P2 standard/counter damage + telegraph **repeat Phase 1** (20/30 dmg, 500/450 ms) until the designer tables Phase 2 separately (open item → game-designer).
+- `PhaseTwoTriggerHp` returns `float` (GDD variable table types it float) and computes in double (800 × 0.7 → 560).
+- Test construction path: internal `EnemyDataSpec` + `EnemyDataSO.CreateForTests`; fixtures in `tests/helpers/EnemyDataFixtures.cs`.
+**Test Evidence**: Logic — `tests/unit/game-data/game_data_enemy_data_test.cs` (13 tests). EditMode 84/84.
+**Code Review**: Self-review during the autonomous Sprint 1 batch; consolidated independent review at batch end. LP/QL gates skipped (lean).
