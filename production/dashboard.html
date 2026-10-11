@@ -258,9 +258,9 @@
    ───────────────────────────────────────────────────────────────────────── */
 const DATA = {
   meta:{
-    phase:"Pre-Production · M1 · Sprint 1 planned",
+    phase:"Pre-Production · M1 · Sprint 1 — 15 of 20 stories done",
     consistency:"Architecture independently reviewed 10-10 (3 blockers fixed)",
-    updated:"2026-10-10",
+    updated:"2026-10-11",
     source:"design/, docs/architecture/ (11 ADRs + manifest v2026-10-10), production/epics/, production/gate-checks/"
   },
 
@@ -268,8 +268,8 @@ const DATA = {
     {big:"17 / 17", lbl:"System GDDs authored", pct:100, color:"var(--jade)", note:"All MVP systems designed; 2 clock-wording fixes 10-10"},
     {big:"11 / 12", lbl:"ADRs accepted", pct:92, color:"var(--jade)", note:"0001–0010 amended 10-10 + 0012 new; 0011 audio staged"},
     {big:"69 / 72", lbl:"Requirements traced", pct:96, color:"var(--jade)", note:"0 Foundation/Core gaps; 3 partial (staged audio + 2 payload details)"},
-    {big:"39", lbl:"Foundation stories", pct:null, color:"var(--blue)", note:"5 epics · 38 Ready · 1 Blocked · 14 in Sprint 1 must-have"},
-    {big:"3", lbl:"Decisions waiting on you", pct:null, color:"var(--red)", note:"Unity project location + licence secret + example-test move · art RATIFY list (post-prototype) · play the prototype"},
+    {big:"15 / 20", lbl:"Sprint 1 stories done", pct:75, color:"var(--jade)", note:"All code Must Haves + 5 Should Haves; left: PROTO-1/2, IM-006, GD-003/004 (blocked on values)"},
+    {big:"3", lbl:"Decisions waiting on you", pct:null, color:"var(--red)", note:"Art RATIFY board (7 calls) · arena size + pool capacities (GD-003) · play the prototype"},
     {big:"4", lbl:"Open balance concerns", pct:null, color:"var(--amber)", note:"→ prototype; CD: start with Finisher ≥ Levy HP"}
   ],
 
@@ -289,7 +289,7 @@ const DATA = {
     {nm:"Foundation Epics + Stories", status:"done", dt:"5 epics · 39 stories (37 Ready, 2 Blocked)", doc:"production/epics/index.md"},
     {nm:"Sprint Planning", status:"done", dt:"Sprint 1 (10-12 → 10-23): 13 must-have items, 7.75 of 8 days + QA plan (~178 tests)", doc:"production/sprints/sprint-1.md"},
     {nm:"Prototype", status:"todo", dt:"combo + parry — needs YOU at the keyboard (Sprint 1 critical path)"},
-    {nm:"Implementation", status:"todo", dt:"Starts with bootstrap-combat-frame 001 (Unity project)"},
+    {nm:"Implementation", status:"active", dt:"Sprint 1: 15 stories done — clock, CombatFrame, designer errors, enemy data, pool, input buffer, bootstrap. 188 EditMode + 4 PlayMode tests green; CI green"},
     {nm:"QA", status:"todo", dt:"Test plan, smoke, sign-off"},
     {nm:"Polish / Release", status:"todo", dt:"Steam / itch.io candidate"}
   ],
@@ -324,34 +324,34 @@ const DATA = {
 
   disciplines:[
     {dn:"Game Design (GDDs)", pct:100, color:"var(--jade)", dd:"17/17 approved; 7 minor revision flags pending (flag #4 before Combo stories)"},
-    {dn:"Production / Planning", pct:45, color:"var(--gold)", dd:"Pre-Production; 5 Foundation epics, 39 stories; sprint plan waits on timeline decision"},
+    {dn:"Production / Planning", pct:60, color:"var(--gold)", dd:"M1 cut line set; Sprint 1 planned and 75% done"},
     {dn:"Architecture", pct:96, color:"var(--jade)", dd:"Independently reviewed; 11/12 ADRs; 69/72 TRs; manifest v2026-10-10"},
-    {dn:"Art & Visual", pct:40, color:"var(--gold)", dd:"Art bible complete but PROVISIONAL (7 RATIFY items); 0 asset specs"},
+    {dn:"Art & Visual", pct:45, color:"var(--gold)", dd:"Art bible PROVISIONAL; RATIFY review board published 10-11 (7 calls await you); 0 asset specs"},
     {dn:"Audio", pct:10, color:"var(--red)", dd:"GDD approved; ADR-0011 staged"},
     {dn:"UX", pct:35, color:"var(--gold)", dd:"Pattern library + accessibility tier + combat-hud spec (needs /ux-review)"},
-    {dn:"Engineering / Code", pct:10, color:"var(--red)", dd:"39 implementable stories; no Unity project / src/ yet"},
-    {dn:"QA & Testing", pct:20, color:"var(--gold)", dd:"Every story has QA test cases; CI scaffold awaits Unity project + licence"}
+    {dn:"Engineering / Code", pct:35, color:"var(--gold)", dd:"Unity 6.3 project + 6 assemblies; Foundation spine in place (15 Sprint 1 stories done)"},
+    {dn:"QA & Testing", pct:45, color:"var(--gold)", dd:"188 EditMode + 4 PlayMode tests; CI green on PR #1 (Personal licence)"}
   ],
 
   actions:[
-    {cmd:"Decide: min-spec + timeline", why:"Pin min-spec CPU/GPU/RAM (all prototype benchmarks need it). Producer estimate ~11–12 wks for full MVP vs 3–6 target → choose an M1 'Core Loop Playable' cut line (recommended), extend, or cut systems."},
-    {cmd:"Decide: GDD flag #4 + RATIFY list", why:"C1/C2 upgrade static-vs-delta model (blocks UpgradeCatalogue + Combo stories). The art bible RATIFY list can wait until after the greybox prototype."},
-    {cmd:"Commit the work", why:"~5 months of design + architecture is uncommitted on xin.dynasty-surviours. Producer's #1 recommendation."},
-    {cmd:"/sprint-plan new", why:"After the timeline decision. Sprint 1 = Unity project setup → pool → clock → input → throwaway combo/parry prototype."},
-    {cmd:"/prototype combo-and-parry-system", why:"YOU at the keyboard. Answers 4 balance + 4 feel questions, dodge-vs-parry, Animator A/B, 50/100/200 benchmarks."}
+    {cmd:"Review the art RATIFY board", why:"7 taste calls (accents, Lu Bu gold, player outline, square arena, HUD placement, fonts, blob shadows) — approve/veto on the review board; gates /asset-spec."},
+    {cmd:"Decide arena size + pool capacities", why:"Unblocks GD-003 TuningConfig → GD-004 TestConfigs, and lets Bootstrap wire InputManager + ObjectPool for real."},
+    {cmd:"/prototype combo-and-parry-system", why:"PROTO-1 (2 days) then PROTO-2 with YOU at the keyboard: 4 balance + 4 feel questions, dodge vs parry, 50/100/200 benchmarks."},
+    {cmd:"Ratify autonomous calls", why:"IRunTimeConverter seam (ADR-0004 amendment), OQ-02 frozen-press behaviour, IM-004 AC-IM-11 scoping, open: double ReturnToPool, Iron Captain tier selection, InputManager IRunResettable."},
+    {cmd:"Merge PR #1", why:"All Sprint 1 code is on xin.dynasty-surviours with CI green; independent code review of the batch recommended first."}
   ],
 
   risks:[
-    {sev:"high", tag:"Schedule", text:"Producer: ~55–60 dev-days (11–12 wks) for the full 17-system MVP vs the 3–6 wk target. Needs an M1 cut line before sprint planning.", meta:"PR-PHASE-GATE 10-10 · owner: User"},
     {sev:"high", tag:"Risk", text:"Combat-feel numbers are unvalidated; the core loop has never been played in ~5.5 months of design work.", meta:"CD-PHASE-GATE 10-10 · owner: Prototype"},
     {sev:"med", tag:"Design", text:"Dodge (400ms i-frames, 1s cooldown) may quietly replace parry — the game's hook. Measure dodge vs parry on parriable attacks in the prototype.", meta:"CD-PHASE-GATE · owner: Prototype"},
     {sev:"med", tag:"Balance", text:"Base Finisher 25 < Levy HP 30 — CD calls this a core-fantasy flaw; start the prototype with values where a base Finisher kills a Levy. Parry 80 vs Finisher ceiling remains a hypothesis.", meta:"cross-review #7/#8 · owner: Prototype"},
-    {sev:"med", tag:"Process", text:"Everything is uncommitted; 13 self-reviewed GDDs + 11 auto-accepted ADRs + provisional art bible/UX spec await ratification.", meta:"PR-PHASE-GATE · owner: User"},
-    {sev:"med", tag:"Tech", text:"Min-spec not pinned and camera not locked — all perf gates (4ms tick, 3ms animator, 1,100 draws) lack a reference.", meta:"TD/AD-PHASE-GATE · owner: User + first prototype sprint"},
+    {sev:"med", tag:"Process", text:"Sprint 1 batch stories were self-reviewed (consolidated independent code review pending); several autonomous design calls await ratification.", meta:"2026-10-11 batch · owner: User"},
     {sev:"low", tag:"Resolved", text:"Clock-domain bug (parries would fail forever after the first level-up), stale-collider queries, and UI input double-handling — all fixed in ADR amendments 10-10.", meta:"architecture-review-2026-10-10"}
   ],
 
   log:[
+    {ld:"2026-10-11", lt:"Autonomous Sprint 1 batch: BCF-003/004/005, GD-001, OP-001..004, IM-001..005 done (188 EditMode + 4 PlayMode tests). CI moved to a Personal licence and is green. Art RATIFY review board published."},
+    {ld:"2026-10-10", lt:"BCF-001 Unity 6.3 project + CI; BCF-002 unified run clock (IGameClock.RunTime)."},
     {ld:"2026-10-10", lt:"Decisions: min-spec GTX 1650/R5 3600/16GB; M1 Core Loop Playable (10-12 → 11-20); flag #4 → delta multipliers. Committed 7018499. Sprint 1 planned + QA plan (~178 automated tests)."},
     {ld:"2026-10-10", lt:"/create-epics layer: foundation (5 epics) + /create-stories ×5: 39 stories (37 Ready, 2 Blocked), all with QA test cases."},
     {ld:"2026-10-10", lt:"/gate-check pre-production: CONCERNS (all 4 directors non-blocking) → stage advanced to Pre-Production. TD must-fixes applied: control manifest v2026-10-10, architecture.md v1.1, technical-preferences, engine-reference corrections."},
