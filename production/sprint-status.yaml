@@ -76,11 +76,11 @@ stories:
     name: "PlayerControls asset, single instance & SetContext map switching"
     file: "production/epics/input-manager/story-001-player-controls-asset-and-input-manager-shell.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: "gameplay-programmer"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-11"
   - id: "IM-002"
     name: "Parry press ring buffer — liveness, pruning & capacity"
     file: "production/epics/input-manager/story-002-parry-ring-buffer-liveness.md"

@@ -1,7 +1,7 @@
 # Story 001: PlayerControls asset, single instance & SetContext map switching
 
 > **Epic**: Input Manager
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Manifest Version**: 2026-10-10
@@ -126,7 +126,7 @@
 **Required evidence**:
 - Logic: `tests/unit/input-manager/input_manager_context_test.cs` — must exist and pass (EditMode, deterministic)
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/input-manager/input_manager_context_test.cs` (14 tests), EditMode 121/121
 
 ---
 
@@ -134,3 +134,19 @@
 
 - Depends on: bootstrap-combat-frame Story 001 (Unity 6.3 project, pinned `com.unity.inputsystem`, `Dynasty.Input` asmdef, Active Input Handling = New)
 - Unlocks: Stories 002–011
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-11
+**Criteria**: 6/6 passing.
+**Deviations**: Advisory —
+- **Wrapper generation:** the importer's built-in "Generate C# Class" cannot be used for an asset inside the local `file:../src` package (it resolves `Packages/com.dynasty.game/…`, which does not exist on disk, and would create a stray folder). The asset keeps importer codegen off; `src/Input/Editor/PlayerControlsCodegen.cs` (new Editor-only asmdef `Dynasty.Input.Editor`) regenerates `src/Input/PlayerControls.cs` with the package's own `InputActionCodeGenerator` (menu *Tools ▸ Dynasty ▸ Regenerate PlayerControls Wrapper*). An EditMode test fails if the wrapper drifts from the asset.
+- `IInputAuthority`, `InputContext`, `SteerSample`, `GameAction` live in **`Dynasty.Core`** (`src/Core/Input/`) so consumers never reference `Dynasty.Input`/`Unity.InputSystem`. `GameAction` = Move, Parry, Dodge, Submit, Cancel.
+- AC-3 "exactly one instance" is proven at runtime (live `InputActionAsset` count delta == 1, identity stable across `SetContext`) instead of a source-file scan (file I/O in unit tests — gap G-8; static gate is BCF-006/IM-009). Second `Initialize` throws.
+- Initial map state: **no map enabled** until the first `SetContext` (not invented — RSM/Bootstrap decide the boot context; keeps capture inert, AC-IM-10). `SetContext` disables before enabling so the two maps are never both on (Space is bound in both).
+- Edit-mode disposal destroys the wrapper asset with `DestroyImmediate` (generated `Dispose()` uses `Object.Destroy`).
+- Provisional gamepad Dodge = `buttonWest` (GDD: unnamed face button). **Open:** `IInputAuthority` still has no Dodge accessor — raise with lead-programmer before the Dodge epic.
+- Members owned by later stories return neutral values for now (buffer/consume 002–003, capture 004, move/steer 006, control card 011).
+**Test Evidence**: Logic — `tests/unit/input-manager/input_manager_context_test.cs` (14 tests) via `InputManagerTestSeam` (test assemblies reference `Dynasty.Input` but not `Unity.InputSystem`). EditMode 121/121.
+**Code Review**: Self-review during the autonomous Sprint 1 batch; consolidated independent review (incl. unity-specialist for this HIGH-risk story) at batch end. LP/QL gates skipped (lean).

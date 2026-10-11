@@ -320,3 +320,8 @@ The following steps were identified in the concept doc checklist. **Pick one to 
 - Story: production/epics/object-pool/story-002-attacker-id-spawn-jitter.md
 - Evidence: `tests/unit/object-pool/object_pool_spawn_identity_test.cs` (9 tests), EditMode 107/107
 - Verdict: COMPLETE WITH NOTES (autonomous Sprint 1 batch; consolidated independent code review at batch end)
+
+## Session Extract — /story-done IM-001 2026-10-11
+- Story: production/epics/input-manager/story-001-player-controls-asset-and-input-manager-shell.md
+- Evidence: `tests/unit/input-manager/input_manager_context_test.cs` (14 tests), EditMode 121/121
+- Verdict: COMPLETE WITH NOTES (autonomous Sprint 1 batch; consolidated independent code review at batch end)

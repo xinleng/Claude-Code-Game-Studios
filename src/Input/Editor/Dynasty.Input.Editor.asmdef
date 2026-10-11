@@ -1,0 +1,19 @@
+{
+    "name": "Dynasty.Input.Editor",
+    "rootNamespace": "Dynasty.Input.Editor",
+    "references": [
+        "Unity.InputSystem",
+        "Dynasty.Input"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

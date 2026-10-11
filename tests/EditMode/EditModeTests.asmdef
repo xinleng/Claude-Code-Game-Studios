@@ -6,7 +6,8 @@
         "UnityEditor.TestRunner",
         "Dynasty.Core",
         "Dynasty.GameData",
-        "Dynasty.Gameplay"
+        "Dynasty.Gameplay",
+        "Dynasty.Input"
     ],
     "includePlatforms": [
         "Editor"
