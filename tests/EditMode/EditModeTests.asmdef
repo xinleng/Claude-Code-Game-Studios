@@ -1,0 +1,29 @@
+{
+    "name": "EditModeTests",
+    "rootNamespace": "Dynasty.Tests",
+    "references": [
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "Dynasty.Core",
+        "Dynasty.GameData",
+        "Dynasty.Gameplay",
+        "Dynasty.Input",
+        "Dynasty.TestHelpers",
+        "Dynasty.Bootstrap"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

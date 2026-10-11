@@ -1,0 +1,89 @@
+name: Automated Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  detect:
+    name: Detect Unity Project
+    runs-on: ubuntu-latest
+    outputs:
+      has-project: ${{ steps.check.outputs.has-project }}
+      project-path: ${{ steps.check.outputs.project-path }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check for Unity project
+        id: check
+        run: |
+          # The Unity project may live at the repo root or in a subdirectory —
+          # locate it by ProjectSettings/ProjectVersion.txt. Until the project
+          # is created (pre-implementation phase), tests skip gracefully.
+          PROJECT_DIR=$(find . -maxdepth 3 -type f -name ProjectVersion.txt -path '*/ProjectSettings/*' | head -1 | xargs -r dirname | xargs -r dirname)
+          if [ -n "$PROJECT_DIR" ]; then
+            echo "has-project=true" >> "$GITHUB_OUTPUT"
+            echo "project-path=${PROJECT_DIR#./}" >> "$GITHUB_OUTPUT"
+            echo "Unity project found at: $PROJECT_DIR"
+          else
+            echo "has-project=false" >> "$GITHUB_OUTPUT"
+            echo "No Unity project yet — test jobs will be skipped (scaffolding phase)."
+          fi
+
+  test:
+    name: Run Unity Tests
+    needs: detect
+    if: needs.detect.outputs.has-project == 'true'
+    runs-on: ubuntu-latest
+    # The test runner publishes a "Test Results" check run; the repo's default GITHUB_TOKEN is read-only.
+    permissions:
+      contents: read
+      checks: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Cache Library
+        uses: actions/cache@v4
+        with:
+          path: ${{ needs.detect.outputs.project-path }}/Library
+          key: unity-library-${{ hashFiles(format('{0}/Packages/packages-lock.json', needs.detect.outputs.project-path)) }}
+          restore-keys: unity-library-
+
+      # Unity PERSONAL licence: requires repository secrets UNITY_LICENSE (contents of Unity_lic.ulf from a Hub
+      # "Get a free personal license" activation), UNITY_EMAIL and UNITY_PASSWORD for the same personal Unity account.
+      # Do NOT add UNITY_SERIAL: the Pro seat is employer-owned and its two activations belong to the dev PCs.
+      - name: Run Edit Mode Tests
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: ${{ needs.detect.outputs.project-path }}
+          testMode: editmode
+          artifactsPath: test-results/editmode
+
+      - name: Run Play Mode Tests
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: ${{ needs.detect.outputs.project-path }}
+          testMode: playmode
+          artifactsPath: test-results/playmode
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results/

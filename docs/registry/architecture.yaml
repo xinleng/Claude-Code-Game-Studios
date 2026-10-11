@@ -30,7 +30,7 @@
 #   Superseded entries:     Grep pattern="status: superseded"
 
 version: 1
-last_updated: ""
+last_updated: "2026-07-04"
 
 # ─── STATE OWNERSHIP ─────────────────────────────────────────────────────────
 # Who is the authoritative owner of each piece of shared game state.
@@ -43,7 +43,82 @@ last_updated: ""
 # interface: how other systems access this state (read-only property, method call,
 #   signal, shared resource, etc.) — this is the contract other ADRs depend on.
 
-state_ownership: []
+state_ownership:
+  - state: player_hp
+    status: active
+    owner_system: PlayerHealthSystem
+    adr: docs/architecture/adr-0003-event-architecture.md
+    interface: "IPlayerHealth.CurrentHp / MaxHp (read-only); ApplyDamage/ApplyHeal are the only mutation paths"
+    write_access: PlayerHealthSystem-only
+    referenced_by:
+      - docs/architecture/adr-0003-event-architecture.md
+      - docs/architecture/adr-0009-ui-architecture.md
+    added: 2026-07-04
+    revised: ""
+  - state: player_invulnerability
+    status: active
+    owner_system: PlayerHealthSystem
+    adr: docs/architecture/adr-0003-event-architecture.md
+    interface: "OpenInvulnerability(duration_ms) — single shared timer, latest-end-time-wins; callers: ParrySystem (300ms), DodgeSystem (400ms)"
+    write_access: PlayerHealthSystem-only
+    referenced_by:
+      - docs/architecture/adr-0003-event-architecture.md
+    added: 2026-07-04
+    revised: ""
+  - state: combo_counter
+    status: active
+    owner_system: ComboSystem
+    adr: docs/architecture/adr-0002-frame-execution-order.md
+    interface: "IComboSystem.ComboCounter (read-only int {0,1,2}); AdvanceFromParry() is the only external mutator (P3)"
+    write_access: ComboSystem-only
+    referenced_by:
+      - docs/architecture/adr-0002-frame-execution-order.md
+      - docs/architecture/adr-0003-event-architecture.md
+    added: 2026-07-04
+    revised: ""
+  - state: momentum_meter
+    status: active
+    owner_system: ParrySystem
+    adr: docs/architecture/adr-0003-event-architecture.md
+    interface: "IParrySystem.MomentumMeter (read-only float 0–100); reset applied by ParrySystem inside the ordered DamageTaken dispatch"
+    write_access: ParrySystem-only
+    referenced_by:
+      - docs/architecture/adr-0003-event-architecture.md
+    added: 2026-07-04
+    revised: ""
+  - state: run_clock
+    status: active
+    owner_system: RunSessionManager
+    adr: docs/architecture/adr-0002-frame-execution-order.md
+    interface: "runStartTime distributed at run init to InputManager/EnemySystemManager/WaveSpawner; all timestamps run-local"
+    write_access: RunSessionManager-only
+    referenced_by:
+      - docs/architecture/adr-0002-frame-execution-order.md
+      - docs/architecture/adr-0004-input-authority.md
+    added: 2026-07-04
+    revised: ""
+  - state: raw_input_devices
+    status: active
+    owner_system: InputManager
+    adr: docs/architecture/adr-0004-input-authority.md
+    interface: "IInputAuthority — InputManager is the sole subscriber to Input System devices/actions"
+    write_access: InputManager-only
+    referenced_by:
+      - docs/architecture/adr-0004-input-authority.md
+    added: 2026-07-04
+    revised: ""
+  - state: enemy_state_and_hp
+    status: active
+    owner_system: EnemySystemManager
+    adr: docs/architecture/adr-0001-entity-architecture.md
+    interface: "IEnemyWorld.ApplyEnemyDamage / RequestStagger / NearestEnemies; two-phase tick (damage then state-transition)"
+    write_access: EnemySystemManager-only
+    referenced_by:
+      - docs/architecture/adr-0001-entity-architecture.md
+      - docs/architecture/adr-0005-object-pooling-lifecycle.md
+      - docs/architecture/adr-0007-spatial-queries-steering.md
+    added: 2026-07-04
+    revised: ""
 
 # Example:
 #
@@ -71,7 +146,61 @@ state_ownership: []
 #
 # pattern options: signal | direct_call | event_bus | shared_resource | rpc | none
 
-interfaces: []
+interfaces:
+  - contract: damage_taken_dispatch
+    status: active
+    pattern: direct_call
+    detail: "Ordered sequential dispatch inside PlayerHealthSystem: S6 pre-read → apply damage → threshold-gated resets (Parry then Combo) → multicast DamageTaken (presentation) → PlayerDead. Payload: DamageTakenData readonly struct."
+    adr: docs/architecture/adr-0003-event-architecture.md
+    referenced_by:
+      - docs/architecture/adr-0002-frame-execution-order.md
+    added: 2026-07-04
+    revised: ""
+  - contract: gameplay_events
+    status: active
+    pattern: signal
+    detail: "Publisher-owned System.Action<T> with readonly-struct payloads for all gameplay events (SwingLanded, ParrySucceeded, FinisherResolved, AttackEvent presentation tier, PlayerDead)."
+    adr: docs/architecture/adr-0003-event-architecture.md
+    referenced_by:
+      - docs/architecture/adr-0009-ui-architecture.md
+    added: 2026-07-04
+    revised: ""
+  - contract: attack_event_delivery
+    status: active
+    pattern: direct_call
+    detail: "parry.ReceiveAttackEvent(in evt) is the authoritative delivery; AttackerId-keyed dictionary; ParrySystem.FlushEventsFor(id) called by ObjectPool.ReturnToPool and Warlord phase transition."
+    adr: docs/architecture/adr-0003-event-architecture.md
+    referenced_by:
+      - docs/architecture/adr-0005-object-pooling-lifecycle.md
+    added: 2026-07-04
+    revised: ""
+  - contract: parry_press_consumption
+    status: active
+    pattern: direct_call
+    detail: "Consumer-pull: TryConsumeParryPress(notBefore) / HasLiveParryPress(); ring buffer capacity 4, 120ms front-extension; one press one consumption."
+    adr: docs/architecture/adr-0004-input-authority.md
+    referenced_by: []
+    added: 2026-07-04
+    revised: ""
+  - contract: run_reset
+    status: active
+    pattern: direct_call
+    detail: "IRunResettable.ResetForNewRun() registered with RunSessionManager; invoked only from a Resolved state (guarded)."
+    adr: docs/architecture/adr-0002-frame-execution-order.md
+    referenced_by:
+      - docs/architecture/adr-0006-data-configuration.md
+    added: 2026-07-04
+    revised: ""
+  - contract: frame_order
+    status: active
+    pattern: direct_call
+    detail: "[-200] InputManager → [-100] EnemySystemManager → [0] CombatFrame(Parry→Dodge→CombatCore→Combo→PlayerHealth→Progression) → [+100] Presentation. Combat sub-order = explicit sequential calls in CombatFrame.RunFrame(dt)."
+    adr: docs/architecture/adr-0002-frame-execution-order.md
+    referenced_by:
+      - docs/architecture/adr-0001-entity-architecture.md
+      - docs/architecture/adr-0010-test-harness.md
+    added: 2026-07-04
+    revised: ""
 
 # Example:
 #
@@ -131,7 +260,73 @@ performance_budgets: []
 # Register an API decision when the choice is non-obvious and other ADRs might
 # make a different choice for the same purpose without knowing this was decided.
 
-api_decisions: []
+api_decisions:
+  - purpose: player_input
+    status: active
+    api: "Input System package (Input Actions asset + generated wrapper), wrapped by InputManager/IInputAuthority"
+    not: "legacy UnityEngine.Input class"
+    adr: docs/architecture/adr-0004-input-authority.md
+    reason: "Legacy Input deprecated in Unity 6; buffering/fairness requires a single capture point"
+    referenced_by: []
+    added: 2026-07-04
+    revised: ""
+  - purpose: range_and_hit_queries
+    status: active
+    api: "Physics.OverlapSphereNonAlloc with pre-allocated Collider[200] buffers (player-centric AoE); uniform grid for enemy separation; plain distance-squared for enemy→player"
+    not: "Physics.OverlapSphere / RaycastAll (allocating); NavMesh for MVP"
+    adr: docs/architecture/adr-0007-spatial-queries-steering.md
+    reason: "No per-call allocation; O(n²) forbidden by enemy-definition Contract #3"
+    referenced_by:
+      - docs/architecture/adr-0001-entity-architecture.md
+    added: 2026-07-04
+    revised: ""
+  - purpose: telegraph_and_combat_vfx
+    status: active
+    api: "VFX Graph with GPU instancing, one asset per telegraph shape; RecordRenderGraph for screen-space overlays"
+    not: "per-enemy ParticleSystem instances; URP Compatibility Mode passes"
+    adr: docs/architecture/adr-0008-vfx-rendering.md
+    reason: "Draw-call budget at 200 telegraphs; Compatibility Mode deprecated in 6.3"
+    referenced_by: []
+    added: 2026-07-04
+    revised: ""
+  - purpose: runtime_ui
+    status: active
+    api: "UI Toolkit (UIDocument/UXML/USS), event-driven presenters"
+    not: "UGUI Canvas for new screens; per-frame polling of gameplay state; VisualElement.transform (deprecated 6.2+)"
+    adr: docs/architecture/adr-0009-ui-architecture.md
+    reason: "Technical preferences mandate UI Toolkit; retained-mode + change-driven updates"
+    referenced_by: []
+    added: 2026-07-04
+    revised: ""
+  - purpose: game_data_and_tuning
+    status: active
+    api: "ScriptableObjects (EnemyDataSO, GeneralData, UpgradeCatalogueSO, TuningConfig) with direct serialized references + bootstrap GameDataValidator"
+    not: "Addressables (MVP); Resources.Load; hardcoded gameplay values"
+    adr: docs/architecture/adr-0006-data-configuration.md
+    reason: "MVP content volume is trivial; Resources deprecated practice; coding standard requires external values"
+    referenced_by:
+      - docs/architecture/adr-0005-object-pooling-lifecycle.md
+    added: 2026-07-04
+    revised: ""
+  - purpose: time_source_in_gameplay_logic
+    status: active
+    api: "injected IGameClock (Time/UnscaledTime/DeltaTime)"
+    not: "direct Time.time / Time.unscaledTime reads inside testable gameplay logic"
+    adr: docs/architecture/adr-0010-test-harness.md
+    reason: "Deterministic EditMode tests require an injectable clock"
+    referenced_by:
+      - docs/architecture/adr-0002-frame-execution-order.md
+    added: 2026-07-04
+    revised: ""
+  - purpose: randomness_in_gameplay_logic
+    status: active
+    api: "injected System.Random (seedable)"
+    not: "UnityEngine.Random inside testable gameplay logic"
+    adr: docs/architecture/adr-0010-test-harness.md
+    reason: "Deterministic tests for jitter/draws require seedable RNG"
+    referenced_by: []
+    added: 2026-07-04
+    revised: ""
 
 # Example:
 #
@@ -157,7 +352,55 @@ api_decisions: []
 # Register a pattern when an ADR explicitly bans it AND other ADRs might
 # unknowingly use it (i.e., it's a tempting but wrong approach for this project).
 
-forbidden_patterns: []
+forbidden_patterns:
+  - pattern: unityevent_on_combat_path
+    status: active
+    description: "UnityEvent (or SendMessage) must not carry any per-hit/per-frame combat event. Use publisher-owned System.Action<T> with readonly-struct payloads."
+    why: "Reflection dispatch + argument boxing causes GC pressure at 200-enemy hit frequency (damage-health.md hard prohibition)."
+    adr: docs/architecture/adr-0003-event-architecture.md
+    added: 2026-07-04
+  - pattern: self_updating_combat_system
+    status: active
+    description: "No combat/gameplay system may implement its own Update()/FixedUpdate(). All ticks flow through InputManager(-200) → EnemySystemManager(-100) → CombatFrame(0)."
+    why: "Intra-frame ordering contracts (parry priority, damage-before-state-transition) break under unspecified script ordering."
+    adr: docs/architecture/adr-0002-frame-execution-order.md
+    added: 2026-07-04
+  - pattern: raw_device_access_outside_inputmanager
+    status: active
+    description: "Keyboard.current / Mouse.current / Gamepad.current / InputAction reads are forbidden outside InputManager.cs. Grep-checkable (AC-IM-13)."
+    why: "Single input authority is the parry-fairness guarantee (input-manager Core Rule 1)."
+    adr: docs/architecture/adr-0004-input-authority.md
+    added: 2026-07-04
+  - pattern: setactive_false_outside_pool
+    status: active
+    description: "GameObject.SetActive(false) on enemies (and Destroy on any pooled object) is forbidden outside ObjectPool.ReturnToPool."
+    why: "Any other deactivation path silently bypasses the parry-event flush contract → ghost parry windows (enemy-definition Contract #2)."
+    adr: docs/architecture/adr-0005-object-pooling-lifecycle.md
+    added: 2026-07-04
+  - pattern: hardcoded_gameplay_value
+    status: active
+    description: "No gameplay/tuning value may be a literal in code. All values come from GameData ScriptableObjects (TuningConfig etc.). Exception: boundary-value tests where the number IS the point."
+    why: "Coding standard: data-driven values; balance changes must never require code changes."
+    adr: docs/architecture/adr-0006-data-configuration.md
+    added: 2026-07-04
+  - pattern: allocating_physics_queries
+    status: active
+    description: "Physics.OverlapSphere / RaycastAll (allocating overloads) are forbidden. Use NonAlloc variants with pre-allocated buffers."
+    why: "Per-call managed array allocation → GC pressure at query frequency (enemy-definition Contract #3, deprecated-apis.md)."
+    adr: docs/architecture/adr-0007-spatial-queries-steering.md
+    added: 2026-07-04
+  - pattern: urp_compatibility_mode_pass
+    status: active
+    description: "Custom render passes must implement RecordRenderGraph. The Execute(ScriptableRenderContext, ref RenderingData) Compatibility Mode path is forbidden."
+    why: "Compatibility Mode is hidden and deprecated in Unity 6.3 (breaking-changes.md); building on it guarantees forced migration."
+    adr: docs/architecture/adr-0008-vfx-rendering.md
+    added: 2026-07-04
+  - pattern: direct_cross_system_state_write
+    status: active
+    description: "A system must never write state owned by another system (see state_ownership). Mutations go through the owner's interface methods only."
+    why: "Preserves the one-owner-per-fact principle every GDD contract assumes; prevents race/ordering bugs."
+    adr: docs/architecture/adr-0003-event-architecture.md
+    added: 2026-07-04
 
 # Example:
 #

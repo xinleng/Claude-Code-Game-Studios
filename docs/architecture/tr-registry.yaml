@@ -23,34 +23,573 @@
 #   NNN = three-digit zero-padded sequence per system, starting at 001
 #
 # STATUS VALUES: active | deprecated | superseded-by: TR-[system]-NNN
-
-version: 1
-last_updated: ""
-
-requirements: []
-
-# --- EXAMPLE ENTRIES (remove when first real entries are added) ---
 #
-# - id: TR-combat-001
-#   system: combat
-#   gdd: design/gdd/combat-system.md
-#   requirement: "Player takes damage from enemies based on attack power minus defence"
-#   created: 2026-03-10
-#   revised: ""
-#   status: active
-#
-# - id: TR-combat-002
-#   system: combat
-#   gdd: design/gdd/combat-system.md
-#   requirement: "Combo window timing is 0.4 seconds between hits"
-#   created: 2026-03-10
-#   revised: "2026-04-01"
-#   status: active
-#
-# - id: TR-combat-003
-#   system: combat
-#   gdd: design/gdd/combat-system.md
-#   requirement: "Old damage formula using raw stats"
-#   created: 2026-03-10
-#   revised: ""
-#   status: superseded-by: TR-combat-001
+# PROVENANCE: TR-GC0-001 .. TR-TP-001 seeded from the architecture.md baseline
+# (2026-07-03, 58 entries). TR IDs from TR-CC-006 / TR-DH-010 / TR-UD-* /
+# TR-AI-004 / TR-PR-005 / TR-VA-002 / TR-UI-003 / TR-WS-004 / TR-RS-005..006 /
+# TR-TP-002 onward were added by /architecture-review 2026-10-10 (independent
+# 17-GDD re-extraction).
+
+version: 2
+last_updated: "2026-10-10"
+
+requirements:
+
+  # --- game-concept ---
+  - id: TR-GC0-001
+    system: game-concept
+    gdd: design/gdd/game-concept.md
+    requirement: "60 fps (16.6ms) at 200 concurrent enemies + VFX; <=1500 draw calls; <=4GB memory (perf figures sourced from technical-preferences; 200-enemy density from Pillar 1)"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-GC0-002
+    system: game-concept
+    gdd: design/gdd/game-concept.md
+    requirement: "20-minute run timer drives win condition and all scheduled events (elites 300/600/900s +-5s, boss 1080s, wave step 120s)"
+    created: 2026-07-03
+    revised: ""
+    status: active
+  - id: TR-GC0-003
+    system: game-concept
+    gdd: design/gdd/game-concept.md
+    requirement: "Full state reset on retry across every system (counter, meter, XP, timer, enemies, upgrades)"
+    created: 2026-07-03
+    revised: ""
+    status: active
+
+  # --- enemy-definition ---
+  - id: TR-ED-001
+    system: enemy-definition
+    gdd: design/gdd/enemy-definition.md
+    requirement: "Single EnemySystemManager ticks all enemies; two sequential phases per frame (damage -> state-transition); [DefaultExecutionOrder(-100)] before Parry/UI"
+    created: 2026-07-03
+    revised: ""
+    status: active
+  - id: TR-ED-002
+    system: enemy-definition
+    gdd: design/gdd/enemy-definition.md
+    requirement: "AttackEvent struct contract (AttackerId, AttackStartTime, TelegraphDurationMs, AttackDamage, AttackerPosition, Parriable, IsCounterHit, DamageType); one emission per attack"
+    created: 2026-07-03
+    revised: ""
+    status: active
+  - id: TR-ED-003
+    system: enemy-definition
+    gdd: design/gdd/enemy-definition.md
+    requirement: "AttackerId unique per spawn instance (pool instance counter per ADR-0005 amendment — not static, not pool slot); test-resettable via ResetInstanceIdCounter() on the pool instance. Supersedes the 'static counter' wording in enemy-definition AttackerId comment + damage-health Contract #6"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-ED-004
+    system: enemy-definition
+    gdd: design/gdd/enemy-definition.md
+    requirement: "Pool contract: ReturnToPool calls ParrySystem.FlushEventsFor(id) before deactivation; SetActive(false) forbidden outside the pool; Parry System keys events by AttackerId dictionary (O(1) flush). FlushEventsFor is ALSO called at Warlord Phase-2 transition"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-ED-005
+    system: enemy-definition
+    gdd: design/gdd/enemy-definition.md
+    requirement: "Range checks via layer-filtered Physics.OverlapSphereNonAlloc with pre-allocated buffer sized to max_enemy_count, or a custom spatial grid - never O(n^2) brute force, never allocating overloads"
+    created: 2026-07-03
+    revised: ""
+    status: active
+  - id: TR-ED-006
+    system: enemy-definition
+    gdd: design/gdd/enemy-definition.md
+    requirement: "Telegraph VFX: VFX Graph with GPU instancing, one asset per telegraph shape; per-enemy ParticleSystem instances forbidden; screen-space combat overlays via RecordRenderGraph only"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-ED-007
+    system: enemy-definition
+    gdd: design/gdd/enemy-definition.md
+    requirement: "Warlord Phase 1/2 data both loaded at spawn via serialized EnemyDataSO references; atomic activeData swap at the start of the state-transition phase of the Phase-2 trigger frame (GDD's Impl Contract #1 wording is authoritative; 'swap at Roar exit' prose flagged for GDD revision)"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-ED-008
+    system: enemy-definition
+    gdd: design/gdd/enemy-definition.md
+    requirement: "Deferred registration: OnEnable stages to RegisterPending; manager flushes at tick start (no list mutation mid-iteration)"
+    created: 2026-07-03
+    revised: ""
+    status: active
+  - id: TR-ED-009
+    system: enemy-definition
+    gdd: design/gdd/enemy-definition.md
+    requirement: "Spawn-time cooldown jitter (Random.Range(0, cooldown)) to prevent synchronized attack spikes"
+    created: 2026-07-03
+    revised: ""
+    status: active
+  - id: TR-ED-010
+    system: enemy-definition
+    gdd: design/gdd/enemy-definition.md
+    requirement: "All combat timestamps run-local on the single unified run clock (see TR-RS-005); float precision safe at 350ms windows over long sessions"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-ED-011
+    system: enemy-definition
+    gdd: design/gdd/enemy-definition.md
+    requirement: "IsPhaseTransitionLocked observable property + 1700ms roar watchdog that unblocks the Dead path"
+    created: 2026-07-03
+    revised: ""
+    status: active
+  - id: TR-ED-012
+    system: enemy-definition
+    gdd: design/gdd/enemy-definition.md
+    requirement: "Shared 8-state enemy state machine (Idle/Chase/Telegraph/Attack/Cooldown/Staggered/Roar/Dead), data-driven per type - no per-type state classes"
+    created: 2026-07-03
+    revised: ""
+    status: active
+  - id: TR-ED-013
+    system: enemy-definition
+    gdd: design/gdd/enemy-definition.md
+    requirement: "Load-time/receipt-time validation + clamping of tuning values with designer-error logging (stagger_resist_multiplier, phase_2_threshold_ratio, finisher/burst damage floors, etc.)"
+    created: 2026-07-03
+    revised: ""
+    status: active
+
+  # --- damage-health ---
+  - id: TR-DH-001
+    system: damage-health
+    gdd: design/gdd/damage-health.md
+    requirement: "DamageTaken as C# delegate with readonly struct payload; UnityEvent forbidden on combat hot paths (GC pressure)"
+    created: 2026-07-03
+    revised: ""
+    status: active
+  - id: TR-DH-002
+    system: damage-health
+    gdd: design/gdd/damage-health.md
+    requirement: "Entity-architecture ADR (MonoBehaviour vs DOTS) accepted before any combat code"
+    created: 2026-07-03
+    revised: ""
+    status: active
+  - id: TR-DH-003
+    system: damage-health
+    gdd: design/gdd/damage-health.md
+    requirement: "iframe timer = timestamp pattern on the unscaled clock (correct under timeScale = 0); via injected IGameClock"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-DH-004
+    system: damage-health
+    gdd: design/gdd/damage-health.md
+    requirement: "Same-frame parry priority: Parry evaluates before Damage & Health - CombatFrame orchestrator preferred over hidden Script Execution Order settings"
+    created: 2026-07-03
+    revised: ""
+    status: active
+  - id: TR-DH-005
+    system: damage-health
+    gdd: design/gdd/damage-health.md
+    requirement: "OpenInvulnerability(duration_ms) - Damage & Health is single owner of invulnerability; one timer; latest-end-time overlap resolution; callers: Parry (300ms), Dodge (400ms), post-hit (500ms)"
+    created: 2026-07-03
+    revised: ""
+    status: active
+  - id: TR-DH-006
+    system: damage-health
+    gdd: design/gdd/damage-health.md
+    requirement: "Reset API guarded (no-op + designer error unless Dead/Resolved); ForceState() test seam"
+    created: 2026-07-03
+    revised: ""
+    status: active
+  - id: TR-DH-007
+    system: damage-health
+    gdd: design/gdd/damage-health.md
+    requirement: "PlayerDead payload carries kill context (KillerAttackerId, KillerDamageType, ComboCounterAtDeath, MomentumAtDeath, TimeOfDeath - fields nullable for non-combat death); FinalHP clamped to 0; combo/momentum captured pre-reset"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-DH-008
+    system: damage-health
+    gdd: design/gdd/damage-health.md
+    requirement: "effective_damage = max(1, floor(raw x (1 - reduction))); reduction values restricted to exact binary fractions; caps (damage_reduction_cap, regen_rate_max) enforced at upgrade-apply time; raw_damage <= 0 rejected with designer error"
+    created: 2026-07-03
+    revised: ""
+    status: active
+  - id: TR-DH-009
+    system: damage-health
+    gdd: design/gdd/damage-health.md
+    requirement: "reset_damage_threshold gate: combo/momentum resets fire only at effective_damage >= 3; S6 reduction evaluated INSIDE the damage formula step (pre-reset momentum read), not as a DamageTaken subscriber - ordered dispatch per ADR-0003"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+
+  # --- general-characters ---
+  - id: TR-GC-001
+    system: general-characters
+    gdd: design/gdd/general-characters.md
+    requirement: "GeneralData profiles as data assets; nullable fields (FinisherAngle, KnockbackForce/Radius) readable only for the matching shape - no 0.0 sentinels (accessor guards; Unity cannot serialize Nullable<T> directly); stored FinisherDamage/Radius are final pre-computed values, never mutated at runtime"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-GC-002
+    system: general-characters
+    gdd: design/gdd/general-characters.md
+    requirement: "Finisher geometry mapping: Ring/PointBurst = full-circle overlap; Cone = 45-degree half-angle wedge oriented by directional input; PointBurst adds radial knockback via Combat Core; deterministic nearest-enemy fallback (XZ distance, lower-entity-index tie-break)"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-GC-003
+    system: general-characters
+    gdd: design/gdd/general-characters.md
+    requirement: "Canonical screen-forward fallback Vector3(0,0,1) shared by cone fallback and dodge direction"
+    created: 2026-07-03
+    revised: ""
+    status: active
+
+  # --- input-manager ---
+  - id: TR-IM-001
+    system: input-manager
+    gdd: design/gdd/input-manager.md
+    requirement: "Single input authority: only Input Manager touches devices/InputActions - architectural invariant, statically checkable (bootstrap PanelSettings wiring is the single named exemption, per ADR-0004 amendment)"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-IM-002
+    system: input-manager
+    gdd: design/gdd/input-manager.md
+    requirement: "One Input Actions asset, two maps (Gameplay / UI); context switching (SetContext) driven by Run Session Manager; KB/M primary, gamepad best-effort with scheme auto-switch"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-IM-003
+    system: input-manager
+    gdd: design/gdd/input-manager.md
+    requirement: "Parry press ring buffer (capacity 4, 120ms life) with TryConsumeParryPress(notBefore) / HasLiveParryPress() consumer-pull API; one press one consumption; most-recent live press wins; front-extension only; performed-edge only (no autofire)"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-IM-004
+    system: input-manager
+    gdd: design/gdd/input-manager.md
+    requirement: "Input timestamps run-local on the unified run clock (TR-RS-005); buffer frozen (not pruned) while context != Gameplay; capture inert until runStartTime set"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-IM-005
+    system: input-manager
+    gdd: design/gdd/input-manager.md
+    requirement: "Frame order: Input Manager (prune-then-capture) -> Parry (query/consume) -> Combat Core / Damage & Health"
+    created: 2026-07-03
+    revised: ""
+    status: active
+
+  # --- combat-core ---
+  - id: TR-CC-001
+    system: combat-core
+    gdd: design/gdd/combat-core.md
+    requirement: "Auto-attack tick: nearest-target selection (XZ, lower-entity-index tie-break), interval gating, max_targets hit resolution via NonAlloc overlap"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-CC-002
+    system: combat-core
+    gdd: design/gdd/combat-core.md
+    requirement: "SwingLanded signal (>=1 hit per swing -> exactly +1 combo advance) consumed by Combo System; whiff emits nothing"
+    created: 2026-07-03
+    revised: ""
+    status: active
+  - id: TR-CC-003
+    system: combat-core
+    gdd: design/gdd/combat-core.md
+    requirement: "Locomotion integrates CurrentMoveDirection (transform integration, no physics); Dodge System overrides locomotion and suppresses auto-attack during dash; A5 temporary speed buff timer owned here"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-CC-004
+    system: combat-core
+    gdd: design/gdd/combat-core.md
+    requirement: "Knockback application with elite gate (suppress for Iron Captain/Warlord at combo_counter < 2, read pre-reset) - spy-testable ApplyKnockback seam; knockback applied as steering-velocity impulse by EnemySystemManager, not Rigidbody force"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-CC-005
+    system: combat-core
+    gdd: design/gdd/combat-core.md
+    requirement: "Upgrade deltas (A1-A6) received as resolved values at pick time - Combat Core applies, never reads the catalogue"
+    created: 2026-07-03
+    revised: ""
+    status: active
+  - id: TR-CC-006
+    system: combat-core
+    gdd: design/gdd/combat-core.md
+    requirement: "Finisher-replaces-3rd-swing handshake: Combat Core checks combo-primed state (ComboCounter == 2) BEFORE applying normal swing damage; the 3rd landing swing delegates resolution to Combo System's Finisher instead of normal swing effects (combat-core Rule 6 / combo-system Rule 2 / AC-CC-08)"
+    created: 2026-10-10
+    revised: ""
+    status: active
+  - id: TR-CC-007
+    system: combat-core
+    gdd: design/gdd/combat-core.md
+    requirement: "Damage/kill source taxonomy: every enemy-damage and kill event carries its source (AutoAttack | Finisher | ChainStrike | ParryBurst) plus an attack-instance id, so A6 (auto-kill-only cooldown reset, one trigger per A4 multi-kill swing), S5 (5-kills-in-5s window across sources) and C6 (chain = non-Finisher hit) are resolvable"
+    created: 2026-10-10
+    revised: ""
+    status: active
+
+  # --- combo-system ---
+  - id: TR-CB-001
+    system: combo-system
+    gdd: design/gdd/combo-system.md
+    requirement: "Combo counter state machine {0,1,2} + Finisher execution consuming general geometry (single-frame resolution); FinisherUpgradeDelta accumulation with 0.5 caps; reset inputs: DamageTaken gate (threshold + per-general combo_reset_on_damage flag) and combo_counter_timeout 3.0s"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-CB-002
+    system: combo-system
+    gdd: design/gdd/combo-system.md
+    requirement: "Zhao Yun cone orientation: LastSteerDirection + 300ms staleness window -> nearest-enemy -> screen-forward fallback chain"
+    created: 2026-07-03
+    revised: ""
+    status: active
+  - id: TR-CB-003
+    system: combo-system
+    gdd: design/gdd/combo-system.md
+    requirement: "C1-C6 upgrade hooks (damage/radius overrides, C3 reset-to-1, C4 infantry stagger, C5 heal via IPlayerHealth.ApplyHeal with finisher_max_targets cap, C6 chain classified as non-Finisher hit); gate reads of combo_counter (Parry burst, knockback) happen BEFORE the post-Finisher reset"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+
+  # --- parry-system ---
+  - id: TR-PR-001
+    system: parry-system
+    gdd: design/gdd/parry-system.md
+    requirement: "Per-attack parry windows derived from TelegraphDurationMs; open-window set keyed by AttackerId; Parriable = false opens no window; one press resolves only the most recently received unresolved event"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-PR-002
+    system: parry-system
+    gdd: design/gdd/parry-system.md
+    requirement: "Momentum meter [0,100]; burst formula base_burst x (0.25 + m/100 x 1.75); reset via momentum_reset_multiplier on threshold damage (dedicated momentum-reset dispatch from Damage & Health per ADR-0003); no passive decay"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-PR-003
+    system: parry-system
+    gdd: design/gdd/parry-system.md
+    requirement: "Elite burst gate reads combo_counter from Combo System at burst resolution; parried attack suppressed before Damage & Health sees it; burst AoE via NonAlloc overlap; stagger requests to EnemySystemManager"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-PR-004
+    system: parry-system
+    gdd: design/gdd/parry-system.md
+    requirement: "P1-P6 + S6 hooks; S6 momentum exposure inside the damage formula step with fixed dispatch ordering (ADR-0003); P6 heal 10s cooldown starts even when capped"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-PR-005
+    system: parry-system
+    gdd: design/gdd/parry-system.md
+    requirement: "Projectile linkage: Archer projectiles pooled and keyed by AttackerId; a successful parry cancels ALL in-flight projectiles for that AttackerId (returned to pool, AttackDamage=0); range resolved at fire time, not hit time"
+    created: 2026-10-10
+    revised: ""
+    status: active
+
+  # --- dodge-system ---
+  - id: TR-DG-001
+    system: dodge-system
+    gdd: design/gdd/dodge-system.md
+    requirement: "Dash state machine (Ready/Dashing/Cooldown); direction fallback chain (no staleness window, unlike Combo's 300ms); locomotion override; OpenInvulnerability(400ms); load-time constraint checks: dash clears 2.0u slam radius AND dodge_invuln_ms >= dodge_duration x 1000 + reaction_margin; dash clamped to arena bounds"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+
+  # --- enemy-ai ---
+  - id: TR-AI-001
+    system: enemy-ai
+    gdd: design/gdd/enemy-ai.md
+    requirement: "State-machine executor + steering (pursuit + separation force, weight 0.4, grid-based neighbour lookup) with movement locks in Staggered/Roar; no de-aggro; overlap resolved by separation only"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-AI-002
+    system: enemy-ai
+    gdd: design/gdd/enemy-ai.md
+    requirement: "Deterministic DamageType/IsCounterHit assignment at AttackEvent emission; Slam routes directly to Damage & Health bypassing Parry; reduced-hit flag (combo_counter < 2 snapshot at resolution) carried on enemy-hit events for UI"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-AI-003
+    system: enemy-ai
+    gdd: design/gdd/enemy-ai.md
+    requirement: "Aggro jitter (1-3 frames); Cooldown->Telegraph shortcut (non-Archer); Archer chase-fallback timer rules with >=200ms readability cue"
+    created: 2026-07-03
+    revised: ""
+    status: active
+  - id: TR-AI-004
+    system: enemy-ai
+    gdd: design/gdd/enemy-ai.md
+    requirement: "Enemy HP ownership: EnemySystemManager owns the enemy HP ledger (int arithmetic); Damage & Health owns player HP only; stagger timer non-interruptible, counter-hit on exit (discarded on death or Phase-2 crossing); XP-drop event (xp_weight x xp_scalar) emitted to Progression on Dead"
+    created: 2026-10-10
+    revised: ""
+    status: active
+
+  # --- progression-system ---
+  - id: TR-PG-001
+    system: progression-system
+    gdd: design/gdd/progression-system.md
+    requirement: "XP accumulation + level curve round(xp_base x xp_growth^(level-1)); overflow carry; sequential multi-level-up resolution (never two hands at once); xp_scalar > 0 checked at run start"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-PG-002
+    system: progression-system
+    gdd: design/gdd/progression-system.md
+    requirement: "Draw-of-3 without replacement from eligible pool via injected RNG; drought weighting (2x after 4 dry draws/lane, exhausted lanes excluded); C3 draw condition re-evaluated per draw; Modifier cap (3); category exhaustion; options locked at level-up time; pick screen queued until Finisher completes"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+
+  # --- upgrade-definition ---
+  - id: TR-UD-001
+    system: upgrade-definition
+    gdd: design/gdd/upgrade-definition.md
+    requirement: "UpgradeCatalogue as a data asset: 24 entries (id, Name, one-line Description, Category, typed stat-effect descriptor, eligible_generals, draw_condition flag) + draw-rule constants (drought threshold/multiplier, modifier cap)"
+    created: 2026-10-10
+    revised: ""
+    status: active
+  - id: TR-UD-002
+    system: upgrade-definition
+    gdd: design/gdd/upgrade-definition.md
+    requirement: "Two collections: fixed total_catalogue (24) vs mutable eligible_pool run state (starts 23, C3 held out); pool excludes picked items, exhausted categories, capped Modifiers, condition-held items; retry resets pool state (23 drawable + C3 holdout restored)"
+    created: 2026-10-10
+    revised: ""
+    status: active
+  - id: TR-UD-003
+    system: upgrade-definition
+    gdd: design/gdd/upgrade-definition.md
+    requirement: "Typed effect-delivery at pick time: Progression routes each delta descriptor to its owning system (C->Combo, A->CombatCore, P/S6->Parry, S1-S5->PlayerHealthSystem); no reflection/string lookups; receivers validate caps + log designer errors; same-stat effects stack additively; S4 regen gated on D&H last-damage timestamp (>=3s)"
+    created: 2026-10-10
+    revised: ""
+    status: active
+
+  # --- wave-spawner ---
+  - id: TR-WS-001
+    system: wave-spawner
+    gdd: design/gdd/wave-spawner.md
+    requirement: "Mandatory pre-warmed object pool sized to max_enemy_count (200) per type as needed; Instantiate/Destroy per enemy forbidden"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-WS-002
+    system: wave-spawner
+    gdd: design/gdd/wave-spawner.md
+    requirement: "Escalation as pure function of run time (density(step), speed(step)); target-concurrent refill on 0.5s ticks capped by max_spawns_per_tick; hard cap on actual live count (200); wave_speed_multiplier published for EnemySystemManager (scales, never overwrites, per-type base speeds)"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-WS-003
+    system: wave-spawner
+    gdd: design/gdd/wave-spawner.md
+    requirement: "Spawn ring (14u) with arena-bounds rejection; scripted elite events (300/600/900s +-5s, first tick within tolerance) + boss event (1080s) clearing active elites via pool return WITHOUT death/XP signals"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-WS-004
+    system: wave-spawner
+    gdd: design/gdd/wave-spawner.md
+    requirement: "Spawner as event publisher + lifecycle: wave-step / elite-spawn / boss-spawn events (music + RSM stats feed); spawner states Spawning/Boss/Ended; halt at 1200s or on death; halt/reset API invoked by RSM retry orchestration"
+    created: 2026-10-10
+    revised: ""
+    status: active
+
+  # --- run-session-manager ---
+  - id: TR-RS-001
+    system: run-session-manager
+    gdd: design/gdd/run-session-manager.md
+    requirement: "RSM owns runStartTime (single source), run_duration_s countdown (data-driven, default 1200s), and run flow state machine (Selection/Running/Paused/Resolved-Win/Resolved-Death)"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-RS-002
+    system: run-session-manager
+    gdd: design/gdd/run-session-manager.md
+    requirement: "Pause orchestration: Time.timeScale = 0 + InputManager.SetContext(Menu) on level-up pick (pause-request queue, deferred to next safe frame after Finisher); death-before-win priority on the final frame; death during pick discards the pick"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-RS-003
+    system: run-session-manager
+    gdd: design/gdd/run-session-manager.md
+    requirement: "Stats aggregation (finishers, best parry chain, wave, time, cause-of-death) from system signals - Damage & Health stays a ledger"
+    created: 2026-07-03
+    revised: ""
+    status: active
+  - id: TR-RS-004
+    system: run-session-manager
+    gdd: design/gdd/run-session-manager.md
+    requirement: "Retry reset orchestration: calls every system's guarded reset API (D&H, Progression, Upgrade pool, enemy pool clear, WaveSpawner halt/reset, timer); valid only from Resolved states"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-RS-005
+    system: run-session-manager
+    gdd: design/gdd/run-session-manager.md
+    requirement: "UNIFIED RUN CLOCK: one pause-compensated run-local clock domain (IGameClock.RunTime, RSM-owned origin) used by ALL combat timestamps - AttackStartTime, parry press stamps, steer_time, window comparisons. Mixing Time.time-derived and Time.unscaledTime-derived run-local values is forbidden (they diverge by total paused duration). Resolves conflict C1 found by /architecture-review 2026-10-10"
+    created: 2026-10-10
+    revised: ""
+    status: active
+  - id: TR-RS-006
+    system: run-session-manager
+    gdd: design/gdd/run-session-manager.md
+    requirement: "Initialisation-order contract: runStartTime set first frame before any game logic; Input/EnemyAI/Spawner inert until set; single-scene no-loading-screen flow (selection root deactivated, no SceneManager.LoadScene); arena-bounds ownership (consumed by Dodge clamp + spawn rejection); general data-load failure = critical error state"
+    created: 2026-10-10
+    revised: ""
+    status: active
+
+  # --- ui (combat-feedback-ui, run-ui, upgrade-selection-ui) ---
+  - id: TR-UI-001
+    system: ui
+    gdd: design/gdd/combat-feedback-ui.md
+    requirement: "All UI in UI Toolkit (UXML/USS); event-driven binding (no per-frame polling; 1Hz throttled timer is the exception); keyboard AND gamepad AND mouse navigation with visible focus; no hover-only interaction (live HUD exempt from navigation)"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-UI-002
+    system: ui
+    gdd: design/gdd/combat-feedback-ui.md
+    requirement: "Hit-feedback throttling/pooling at density; DamageType-keyed responses; reduced-elite-hit distinction driven by combo_counter < 2 snapshot; telegraph rendering delegated to VFX layer (ADR-0008 TelegraphRenderer), HUD never renders telegraphs"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-UI-003
+    system: ui
+    gdd: design/gdd/upgrade-selection-ui.md
+    requirement: "Pick screen: 1-3 variable card count with logic seam testable without rendering; animations on unscaled time (screen only exists at timeScale = 0); options as IDs with Name/Description lookup; PlayerDead closes without applying; no timeout; duplicate IDs = upstream contract violation"
+    created: 2026-10-10
+    revised: ""
+    status: active
+
+  # --- vfx-audio ---
+  - id: TR-VA-001
+    system: vfx-audio
+    gdd: design/gdd/vfx-audio.md
+    requirement: "VFX hierarchy (Finisher > parry burst > rest); shape-first colorblind-safe effects; audio never sole signal (deaf/HoH); screen-space overlays (if added) via RecordRenderGraph only; hit-SFX voice limit 16 (8-32 range) with priority ducking (counter-hit/parry/Finisher over ambient)"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-VA-002
+    system: vfx-audio
+    gdd: design/gdd/vfx-audio.md
+    requirement: "Telegraph lifecycle + cap: show on AttackEvent for TelegraphDurationMs, clear on resolve/cancel (death or pool return mid-telegraph); telegraph_concurrent_cap owned by the VFX layer (single owner - combat-feedback-ui duplicate declaration resolved to ADR-0008); counter-hit arc + Warlord slam never culled; post-process throttled first; VFX pooled; per-general Finisher assets distinct (GUID-checked); placeholder assets swappable via data refs; adaptive music driven by wave-step feed"
+    created: 2026-10-10
+    revised: ""
+    status: active
+
+  # --- technical-preferences / cross-cutting ---
+  - id: TR-TP-001
+    system: technical-preferences
+    gdd: .claude/docs/technical-preferences.md
+    requirement: "All gameplay values data-driven (external config, never hardcoded); public APIs doc-commented; DI over singletons for testability; deterministic tests (manual tick pump, injected IGameClock, injected System.Random - never UnityEngine.Random in testable logic)"
+    created: 2026-07-03
+    revised: "2026-10-10"
+    status: active
+  - id: TR-TP-002
+    system: technical-preferences
+    gdd: design/gdd/damage-health.md
+    requirement: "Shared [DESIGNER-ERROR] logging channel assertable by tests (used by damage-health, enemy-definition, upgrade-definition, dodge, combat-core, progression validation rules)"
+    created: 2026-10-10
+    revised: ""
+    status: active

@@ -24,8 +24,13 @@ These are production-ready recommendations as of Unity 6.3 LTS.
 
 ### Use C# 9+ Features (Unity 6 Supports C# 9)
 
+> **Correction 2026-10-10 (/architecture-review audit):** `record` types and `init` accessors
+> compile in Unity only if the project defines the shim
+> `namespace System.Runtime.CompilerServices { internal static class IsExternalInit {} }`.
+> Gameplay event payloads in this project are `readonly struct`s (ADR-0003), not records.
+
 ```csharp
-// ✅ Record types for data
+// ✅ Record types for data (requires the IsExternalInit shim above)
 public record PlayerData(string Name, int Level, float Health);
 
 // ✅ Init-only properties
@@ -51,16 +56,12 @@ public async Task<GameObject> LoadEnemyAsync(string key) {
 }
 ```
 
-### Use Source Generators for Serialization (Unity 6+)
+### ~~Use Source Generators for Serialization (Unity 6+)~~ — REMOVED
 
-```csharp
-// ✅ Source-generated serialization (faster, less reflection)
-[GenerateSerializer]
-public partial struct PlayerStats : IComponentData {
-    public int Health;
-    public int Mana;
-}
-```
+> **Correction 2026-10-10 (/architecture-review audit):** the previous example used
+> `[GenerateSerializer]`, which is **not a Unity API**. Do not copy it. Unity serialization
+> uses `[SerializeField]` / `[Serializable]`; ECS components (only if the DOTS escalation ADR
+> ever fires) are plain `IComponentData` structs with no such attribute.
 
 ---
 

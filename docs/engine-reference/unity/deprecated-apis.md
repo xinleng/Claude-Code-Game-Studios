@@ -62,7 +62,9 @@ Format: **Don't use X** → **Use Y instead**
 | Deprecated | Replacement | Notes |
 |------------|-------------|-------|
 | `Physics.RaycastAll()` | `Physics.RaycastNonAlloc()` | Avoid GC allocations |
-| `Rigidbody.velocity` (direct write) | `Rigidbody.AddForce()` | Better physics stability |
+| `Rigidbody.velocity` | `Rigidbody.linearVelocity` | **Corrected 2026-10-10**: Unity 6 renamed the property (`velocity` is obsolete); AddForce is a usage choice, not the replacement. Also `angularVelocity` unchanged. |
+| `PhysicMaterial` | `PhysicsMaterial` | Unity 6 rename (added 2026-10-10) |
+| `Object.FindObjectOfType<T>()` | `Object.FindFirstObjectByType<T>()` / `FindAnyObjectByType<T>()` | Superseded in Unity 6 (added 2026-10-10). This project forbids lookup-based wiring anyway — DI at Bootstrap (ADR-0012) |
 
 ---
 

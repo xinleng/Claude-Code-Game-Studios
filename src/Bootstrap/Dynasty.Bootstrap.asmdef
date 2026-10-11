@@ -1,0 +1,17 @@
+{
+    "name": "Dynasty.Bootstrap",
+    "rootNamespace": "Dynasty.Bootstrap",
+    "references": [
+        "Dynasty.Core",
+        "Dynasty.Input"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

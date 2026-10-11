@@ -1,0 +1,7 @@
+{
+    "name": "com.dynasty.tests",
+    "version": "0.1.0",
+    "displayName": "Dynasty Survivors - Tests",
+    "description": "EditMode + PlayMode test suites (ADR-0010).",
+    "unity": "6000.3"
+}

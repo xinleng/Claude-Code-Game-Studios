@@ -1,0 +1,17 @@
+{
+    "name": "Dynasty.Gameplay",
+    "rootNamespace": "Dynasty.Gameplay",
+    "references": [
+        "Dynasty.Core",
+        "Dynasty.GameData"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
