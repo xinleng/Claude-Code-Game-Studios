@@ -355,3 +355,8 @@ The following steps were identified in the concept doc checklist. **Pick one to 
 - Story: production/epics/object-pool/story-004-binding-return-order.md
 - Evidence: `tests/unit/object-pool/object_pool_return_order_test.cs` (3 tests), EditMode 180/180
 - Verdict: COMPLETE WITH NOTES (autonomous Sprint 1 batch; consolidated independent code review at batch end)
+
+## Session Extract — /story-done BCF-005 2026-10-11
+- Story: production/epics/bootstrap-combat-frame/story-005-bootstrap-composition-root.md
+- Evidence: `tests/integration/bootstrap/bootstrap_boot_order_test.cs` (8) + PlayMode `tests/PlayMode/bootstrap/bootstrap_scene_smoke_test.cs`; EditMode 188/188, PlayMode 4/4
+- Verdict: COMPLETE WITH NOTES (autonomous Sprint 1 batch; consolidated independent code review at batch end)

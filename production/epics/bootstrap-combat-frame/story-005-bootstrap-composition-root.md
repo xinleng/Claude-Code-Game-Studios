@@ -1,7 +1,7 @@
 # Story 005: Bootstrap Composition Root — Boot Order & DI Wiring
 
 > **Epic**: Bootstrap, CombatFrame & Run Clock
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Integration
 > **Manifest Version**: 2026-10-10
@@ -131,7 +131,7 @@
 - Integration: `tests/integration/bootstrap/bootstrap_boot_order_test.cs` (AC-1…AC-8, EditMode) — must exist and pass
 - PlayMode smoke: `tests/PlayMode/bootstrap/bootstrap_scene_smoke_test.cs` (AC-9) — must pass in CI's PlayMode step
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/bootstrap/bootstrap_boot_order_test.cs` (8) + PlayMode `tests/PlayMode/bootstrap/bootstrap_scene_smoke_test.cs`; EditMode 188/188, PlayMode 4/4
 
 ---
 
@@ -139,3 +139,17 @@
 
 - Depends on: Story 002 (clock), Story 003 (CombatFrame + step seams), Story 004 (designer-error channel) must be DONE
 - Unlocks: Story 006 (static checks run against the wired tree); run-session-manager epic (Selection entry + run-start contract), input-manager epic (`UiInputModuleBinder.Bind` call site), object-pool epic (pre-warm phase), game-data epic (validation phase)
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-11
+**Criteria**: 9/9 passing.
+**Deviations**: Advisory —
+- The MonoBehaviour is **`Bootstrapper`** (on the "Bootstrap" GameObject): a type named `Bootstrap` inside namespace `Dynasty.Bootstrap` makes the simple name resolve to the namespace in consumers.
+- Plain-C# `BootSequence` (phases a→d, one-time) + `CompositionRoot : IBootWiring` (phase b). Phase seams in `Dynasty.Core/Boot`: `IGameDataValidation`, `IInputModuleBinding`, `IPoolPrewarm` (now implemented by `ObjectPool`), `IRunSessionEntry`. `NoOpFrameStep` (Core) fills unbuilt CombatFrame slots; `NoOpBootParticipants` fills unbuilt phases.
+- **Wired today:** one `UnityGameClock`, one `UnityDesignerErrorLog`, `CombatFrame` (all six slots no-op). **Deferred, by dependency:** InputManager (needs `IInputTuning` from TuningConfig — GD-003, blocked on design values), ObjectPool (needs TuningConfig + enemy prefabs), GameDataValidator, UiInputModuleBinder, RSM (receives `IRunClockControl`, held by Bootstrapper for it).
+- Scene: `MainArena.unity` gained `CombatFrame` and `Bootstrap` GameObjects (serialized reference, added by a one-shot batchmode script, deleted after use).
+- AC-7 is checked by a small source scan of `src/Bootstrap` (file I/O; overlaps BCF-006).
+**Test Evidence**: Integration — `tests/integration/bootstrap/bootstrap_boot_order_test.cs` (8 tests, EditMode) + PlayMode smoke `tests/PlayMode/bootstrap/bootstrap_scene_smoke_test.cs`. EditMode 188/188, PlayMode 4/4.
+**Code Review**: Self-review during the autonomous Sprint 1 batch; consolidated independent review at batch end. LP/QL gates skipped (lean).

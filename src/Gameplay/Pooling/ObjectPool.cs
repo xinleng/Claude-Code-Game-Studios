@@ -40,7 +40,7 @@ namespace Dynasty.Gameplay
     /// EnemyController levy = pool.Spawn(EnemyType.Levy, position);
     /// </code>
     /// </example>
-    public sealed class ObjectPool : IObjectPool, IDisposable
+    public sealed class ObjectPool : IObjectPool, IPoolPrewarm, IDisposable
     {
         /// <summary>AttackerId assigned to the first spawn of a fresh (or reset) pool. 0 is never a valid id.</summary>
         public const int FirstAttackerId = 1;

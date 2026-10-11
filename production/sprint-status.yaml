@@ -157,11 +157,11 @@ stories:
     name: "Bootstrap composition root — boot order & DI wiring"
     file: "production/epics/bootstrap-combat-frame/story-005-bootstrap-composition-root.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: "unity-specialist"
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-11"
   - id: "GD-003"
     name: "TuningConfig — run_duration_s, arena_bounds, pool sizes"
     file: "production/epics/game-data/story-003-tuning-config.md"

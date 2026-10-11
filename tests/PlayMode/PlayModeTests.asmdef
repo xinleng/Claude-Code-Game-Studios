@@ -8,7 +8,8 @@
         "Dynasty.GameData",
         "Dynasty.Gameplay",
         "Dynasty.Input",
-        "Dynasty.TestHelpers"
+        "Dynasty.TestHelpers",
+        "Dynasty.Bootstrap"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
